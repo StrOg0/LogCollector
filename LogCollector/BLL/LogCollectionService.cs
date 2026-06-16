@@ -1,7 +1,7 @@
 ﻿using LogCollector.Interfaces;
 using LogCollector.Models;
 
-namespace LogCollector.App.BLL;
+namespace LogCollector.BLL;
 
 public class LogCollectionService
 {
@@ -41,7 +41,7 @@ public class LogCollectionService
                 server.Port,
                 server.Login,
                 server.Password,
-                "/test/logs", // Путь к логам (пока хардкод)
+                "/home/testuser/upload", // Путь к логам (пока хардкод)
                 cancellationToken);
 
             progress?.Report($"Найдено файлов: {files.Count}");
@@ -69,7 +69,12 @@ public class LogCollectionService
             var downloadedFiles = Directory.GetFiles(serverTempDir);
             if (downloadedFiles.Length > 0)
             {
-                File.Copy(downloadedFiles[0], resultFilePath, overwrite: true);
+                using var resultStream = File.Create(resultFilePath);
+                foreach (var file in downloadedFiles)
+                {
+                    using var fileStream = File.OpenRead(file);
+                    await fileStream.CopyToAsync(resultStream, cancellationToken);
+                }
                 result.ResultFilePath = resultFilePath;
                 result.Status = CollectionStatus.Success;
                 result.Message = $"Успешно собрано {downloadedFiles.Length} файл(ов)";

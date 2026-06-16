@@ -1,4 +1,4 @@
-﻿using LogCollector.App.BLL;
+﻿using LogCollector.BLL;
 using LogCollector.Models;
 using System;
 using System.Collections.Generic;
@@ -10,93 +10,103 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using static LogCollector.App.BLL.LogCollectionService;
+using static LogCollector.BLL.LogCollectionService;
 
 namespace LogCollector.UI
 {
     public partial class MainForm : Form
     {
-        private readonly LogCollectionService _service;
+        private readonly LogCollectionService _logService;
         private CancellationTokenSource _cts;
 
-        public MainForm(LogCollectionService service)
+        public MainForm()
         {
             InitializeComponent();
-            _service = service;
+
+            var sshHandler = new SshFileHandler();
+            _logService = new LogCollectionService(sshHandler);
         }
 
-        private async void btnTestCollection_Click(object sender, EventArgs e)
+        private async void btnStartCollection_Click(object sender, EventArgs e)
         {
-            // Блокируем кнопку на время выполнения
-            btnTestCollection.Enabled = false;
+            btnStartCollection.Enabled = false;
+            listBoxLog.Items.Clear();
+            lblStatus.Text = "Выполняется...";
+
             _cts = new CancellationTokenSource();
 
             try
             {
-                // Создаем тестовый сервер (в реальности будем брать из БД)
                 var testServer = new Server
                 {
-                    Id = 1,
-                    HostName = "TestServer",
-                    IpAddress = "127.0.0.1",
-                    Port = 22,
-                    Login = "твой_юзер", // ← замени
-                    Password = "твой_пароль", // ← замени
-                    IsActive = true
+                    Id = 99,
+                    HostName = "DockerTestServer",
+                    IpAddress = "127.0.0.1", 
+                    Port = 2222,             
+                    Login = "testuser",
+                    Password = "testpassword"
                 };
 
-                // Период (пока хардкод)
-                var startDate = DateTime.Now.AddDays(-1);
-                var endDate = DateTime.Now;
-
-                // Временные папки
-                string tempDir = @"C:\temp_logs";
-                string outputDir = @"C:\log_results";
+                string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+                string tempDir = Path.Combine(baseDir, "TempLogs");
+                string outputDir = Path.Combine(baseDir, "OutputLogs");
 
                 Directory.CreateDirectory(tempDir);
                 Directory.CreateDirectory(outputDir);
 
-                // Прогресс
                 var progress = new Progress<string>(message =>
                 {
-                    Debug.WriteLine(message);
-                    // Если есть TextBox или RichTextBox для логов, можно выводить туда:
-                    // txtLog.AppendText(message + Environment.NewLine);
+                    listBoxLog.Items.Add($"[{DateTime.Now:HH:mm:ss}] {message}");
+                    listBoxLog.TopIndex = listBoxLog.Items.Count - 1;
                 });
 
-                Debug.WriteLine("=== Начало теста сбора логов ===");
+                var result = await _logService.CollectLogsAsync(
+                    server: testServer,
+                    startDate: DateTime.Now.AddDays(-1),
+                    endDate: DateTime.Now,
+                    tempDirectory: tempDir,
+                    outputDirectory: outputDir,
+                    progress: progress,
+                    cancellationToken: _cts.Token);
 
-                // Запускаем сбор
-                var result = await _service.CollectLogsAsync(
-                    testServer,
-                    startDate,
-                    endDate,
-                    tempDir,
-                    outputDir,
-                    progress,
-                    _cts.Token);
-
-                Debug.WriteLine($"=== Результат: {result.Status} ===");
-                Debug.WriteLine($"Сообщение: {result.Message}");
-
-                MessageBox.Show(
-                    $"Статус: {result.Status}\n" +
-                    $"Сообщение: {result.Message}\n" +
-                    $"Файл: {result.ResultFilePath}",
-                    "Результат сбора",
-                    MessageBoxButtons.OK,
-                    result.Status == CollectionStatus.Success ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
+                lblStatus.Text = $"Статус: {result.Status}";
+                if (result.Status == CollectionStatus.Success)
+                {
+                    lblStatus.ForeColor = System.Drawing.Color.Green;
+                    listBoxLog.Items.Add($"✅ Успех! Файл сохранен: {result.ResultFilePath}");
+                }
+                else
+                {
+                    lblStatus.ForeColor = System.Drawing.Color.Red;
+                    listBoxLog.Items.Add($"❌ {result.Message}");
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                lblStatus.Text = "Отменено";
+                listBoxLog.Items.Add("⚠️ Операция отменена пользователем.");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"ОШИБКА: {ex.Message}");
-                MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                lblStatus.Text = "Ошибка";
+                lblStatus.ForeColor = System.Drawing.Color.Red;
+                listBoxLog.Items.Add($"💥 Критическая ошибка: {ex.Message}");
             }
             finally
             {
-                btnTestCollection.Enabled = true;
+                btnStartCollection.Enabled = true;
                 _cts?.Dispose();
             }
+        }
+
+        private void listBoxLog_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            
+        }
+
+        private void lblStatus_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }

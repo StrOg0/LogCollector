@@ -28,32 +28,58 @@
         /// </summary>
         private void InitializeComponent()
         {
-            btnTestCollection = new Button();
+            btnStartCollection = new Button();
+            listBoxLog = new ListBox();
+            lblStatus = new Label();
             SuspendLayout();
             // 
-            // btnTestCollection
+            // btnStartCollection
             // 
-            btnTestCollection.Location = new Point(474, 300);
-            btnTestCollection.Name = "btnTestCollection";
-            btnTestCollection.Size = new Size(183, 29);
-            btnTestCollection.TabIndex = 0;
-            btnTestCollection.Text = "btnTestCollection";
-            btnTestCollection.UseVisualStyleBackColor = true;
-            btnTestCollection.Click += btnTestCollection_Click;
+            btnStartCollection.Location = new Point(474, 300);
+            btnStartCollection.Name = "btnStartCollection";
+            btnStartCollection.Size = new Size(183, 29);
+            btnStartCollection.TabIndex = 0;
+            btnStartCollection.Text = "btnStartCollection";
+            btnStartCollection.UseVisualStyleBackColor = true;
+            btnStartCollection.Click += btnStartCollection_Click;
+            // 
+            // listBoxLog
+            // 
+            listBoxLog.FormattingEnabled = true;
+            listBoxLog.Location = new Point(122, 145);
+            listBoxLog.Name = "listBoxLog";
+            listBoxLog.Size = new Size(150, 104);
+            listBoxLog.TabIndex = 1;
+            listBoxLog.SelectedIndexChanged += listBoxLog_SelectedIndexChanged;
+            // 
+            // lblStatus
+            // 
+            lblStatus.AutoSize = true;
+            lblStatus.Location = new Point(516, 80);
+            lblStatus.Name = "lblStatus";
+            lblStatus.Size = new Size(66, 20);
+            lblStatus.TabIndex = 2;
+            lblStatus.Text = "lblStatus";
+            lblStatus.Click += lblStatus_Click;
             // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
-            Controls.Add(btnTestCollection);
+            Controls.Add(lblStatus);
+            Controls.Add(listBoxLog);
+            Controls.Add(btnStartCollection);
             Name = "MainForm";
             Text = "MainForm";
             ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion
 
-        private Button btnTestCollection;
+        private Button btnStartCollection;
+        private ListBox listBoxLog;
+        private Label lblStatus;
     }
 }

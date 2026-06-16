@@ -1,4 +1,6 @@
+using LogCollector.BLL;
 using LogCollector.UI;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace LogCollector
 {
@@ -13,6 +15,7 @@ namespace LogCollector
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
+
             Application.Run(new MainForm());
         }
     }

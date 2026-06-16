@@ -1,7 +1,7 @@
 ﻿using LogCollector.Interfaces;
 using Renci.SshNet;
 
-namespace LogCollector.App.BLL;
+namespace LogCollector.BLL;
 
 public class SshFileHandler : ISshFileHandler
 {
