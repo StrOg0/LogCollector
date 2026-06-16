@@ -1,6 +1,6 @@
 ﻿using LogCollector.Models;
 
-namespace LogCollector.App.DAL;
+namespace LogCollector.DAL;
 
 public interface IDatabaseRepository
 {
