@@ -35,7 +35,7 @@
             // 
             // btnStartCollection
             // 
-            btnStartCollection.Location = new Point(474, 300);
+            btnStartCollection.Location = new Point(504, 155);
             btnStartCollection.Name = "btnStartCollection";
             btnStartCollection.Size = new Size(183, 29);
             btnStartCollection.TabIndex = 0;
@@ -46,16 +46,16 @@
             // listBoxLog
             // 
             listBoxLog.FormattingEnabled = true;
-            listBoxLog.Location = new Point(122, 145);
+            listBoxLog.Location = new Point(80, 80);
             listBoxLog.Name = "listBoxLog";
-            listBoxLog.Size = new Size(150, 104);
+            listBoxLog.Size = new Size(298, 104);
             listBoxLog.TabIndex = 1;
             listBoxLog.SelectedIndexChanged += listBoxLog_SelectedIndexChanged;
             // 
             // lblStatus
             // 
             lblStatus.AutoSize = true;
-            lblStatus.Location = new Point(516, 80);
+            lblStatus.Location = new Point(568, 80);
             lblStatus.Name = "lblStatus";
             lblStatus.Size = new Size(66, 20);
             lblStatus.TabIndex = 2;

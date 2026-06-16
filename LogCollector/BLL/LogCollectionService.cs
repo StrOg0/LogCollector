@@ -41,7 +41,7 @@ public class LogCollectionService
                 server.Port,
                 server.Login,
                 server.Password,
-                "/home/testuser/upload", // Путь к логам (пока хардкод)
+                "/upload", // Путь к логам (пока хардкод)
                 cancellationToken);
 
             progress?.Report($"Найдено файлов: {files.Count}");
