@@ -1,5 +1,7 @@
-﻿using System.IO.Compression;
-using LogCollector.Interfaces;
+﻿using LogCollector.Interfaces;
+using SharpCompress.Archives;
+using SharpCompress.Common;
+using System.IO.Compression;
 
 namespace LogCollector.BLL
 {
@@ -86,6 +88,36 @@ namespace LogCollector.BLL
             }
 
             return destinationArchivePath;
+        }
+
+        private bool IsZipArchive(string filePath) => 
+            filePath.EndsWith(".zip", StringComparison.OrdinalIgnoreCase);
+
+        private bool IsTarGzArchive(string filePath)
+        {
+            string lowerPath = filePath.ToLowerInvariant();
+            return lowerPath.EndsWith(".tar.gz") || 
+                lowerPath.EndsWith(".tgz") || 
+                lowerPath.EndsWith(".tar");
+        }
+
+        private bool IsLogFile(string filePath) => 
+            filePath.EndsWith(".log", StringComparison.OrdinalIgnoreCase);
+
+        private void ExtractTarGz(string archivePath, string extractDir)
+        {
+            using (Stream stream = File.OpenRead(archivePath))
+            using (var archive = ArchiveFactory.OpenArchive(stream))
+            {
+                foreach (var entry in archive.Entries.Where(entry => !entry.IsDirectory))
+                {
+                    entry.WriteToDirectory(extractDir, new ExtractionOptions
+                    {
+                        ExtractFullPath = true,
+                        Overwrite = true
+                    });
+                }
+            }
         }
     }
 }
