@@ -74,21 +74,85 @@ public class LogCollectionService
                     cancellationToken);
             }
 
-            string resultFileName = $"{server.HostName}_{DateTime.Now:yyyyMMdd_HHmmss}.log";
-            string resultFilePath = Path.Combine(outputDirectory, resultFileName);
+            //string resultFileName = $"{server.HostName}_{DateTime.Now:yyyyMMdd_HHmmss}.log";
+            //string resultFilePath = Path.Combine(outputDirectory, resultFileName);
 
             var downloadedFiles = Directory.GetFiles(serverTempDir);
             if (downloadedFiles.Length > 0)
             {
-                using var resultStream = File.Create(resultFilePath);
+                //using var resultStream = File.Create(resultFilePath);
+                //foreach (var file in downloadedFiles)
+                //{
+                //    using var fileStream = File.OpenRead(file);
+                //    await fileStream.CopyToAsync(resultStream, cancellationToken);
+                //}
+                //result.ResultFilePath = resultFilePath;
+                //result.Status = CollectionStatus.Success;
+                //result.Message = $"Успешно собрано {downloadedFiles.Length} файл(ов)";
+
+                //Unpack archives
+                progress?.Report("Анализ скачанных файлов и распаковка архивов...");
+                var allLogFilesToProcess = new List<string>();
+
                 foreach (var file in downloadedFiles)
                 {
-                    using var fileStream = File.OpenRead(file);
-                    await fileStream.CopyToAsync(resultStream, cancellationToken);
+                    string ext = Path.GetExtension(file).ToLowerInvariant();
+                    string fileName = Path.GetFileName(file).ToLowerInvariant();
+
+                    if (ext == ".zip" || fileName.EndsWith(".tar.gz") || fileName.EndsWith(".tgz"))
+                    {
+                        var extractedLogs = _archiveManager.ExtractArchives(file, serverTempDir, archiveProgress);
+                        allLogFilesToProcess.AddRange(extractedLogs);
+                    }
+                    else if (ext == ".log")
+                    {
+                        allLogFilesToProcess.Add(file);
+                    }
                 }
-                result.ResultFilePath = resultFilePath;
+
+                if (allLogFilesToProcess.Count == 0)
+                {
+                    result.Status = CollectionStatus.NoData;
+                    result.Message = "Логи не найдены (в том числе внутри архивов)";
+                    return result;
+                }
+
+                // ФИЛЬТРАЦИЯ / СКЛЕЙКА (Заглушка)
+                // Пока нет потокового чтения, мы просто физически склеиваем все найденные .log в один временный файл
+                progress?.Report($"Найдено {allLogFilesToProcess.Count} лог-файлов. Подготовка к упаковке...");
+                string filteredTempFile = Path.Combine(serverTempDir, $"filtered_{server.IpAddress}.log");
+
+                using (var outStream = File.Create(filteredTempFile))
+                {
+                    foreach (var logFile in allLogFilesToProcess)
+                    {
+                        using var inStream = File.OpenRead(logFile);
+                        await inStream.CopyToAsync(outStream, cancellationToken);
+                    }
+                }
+
+                //Create result archive
+                string resultZipPath = Path.Combine(outputDirectory, $"{server.IpAddress}_{DateTime.Now:yyyyMMdd_HHmmss}.zip");
+
+                var processedLogs = new List<ProcessedLogInfo>
+            {
+                new ProcessedLogInfo
+                {
+                    ServerIp = server.IpAddress,
+                    ServerName = server.HostName,
+                    TempFilePath = filteredTempFile,
+                    LogDate = startDate
+                }
+            };
+
+                progress?.Report("Формирование итогового ZIP-архива...");
+                _archiveManager.CreateResultArchive(resultZipPath, processedLogs, archiveProgress);
+
+                result.ResultFilePath = resultZipPath;
                 result.Status = CollectionStatus.Success;
-                result.Message = $"Успешно собрано {downloadedFiles.Length} файл(ов)";
+                result.Message = $"Успешно собрано и упаковано {allLogFilesToProcess.Count} файл(ов)";
+
+                progress?.Report($"Сбор с {server.HostName} завершен. Архив: {Path.GetFileName(resultZipPath)}");
             }
             else
             {
@@ -96,63 +160,7 @@ public class LogCollectionService
                 result.Message = "Данные не найдены";
             }
 
-            if (Directory.Exists(serverTempDir))
-            {
-                Directory.Delete(serverTempDir, recursive: true);
-                progress?.Report("Временные файлы удалены");
-            }
-
             progress?.Report($"Сбор с {server.HostName} завершен");
-
-            //Unpack archives
-            progress?.Report("Анализ скачанных файлов и распаковка архивов...");
-            var allLogFilesToProcess = new List<string>();
-
-            foreach (var file in downloadedFiles)
-            {
-                string ext = Path.GetExtension(file).ToLowerInvariant();
-                string fileName = Path.GetFileName(file).ToLowerInvariant();
-
-                if (ext == ".zip" || fileName.EndsWith(".tar.gz") || fileName.EndsWith(".tgz"))
-                {
-                    var extractedLogs = _archiveManager.ExtractArchives(file, serverTempDir, archiveProgress);
-                    allLogFilesToProcess.AddRange(extractedLogs);
-                }
-                else if (ext == ".log")
-                {
-                    allLogFilesToProcess.Add(file);
-                }
-            }
-
-            if (allLogFilesToProcess.Count == 0)
-            {
-                result.Status = CollectionStatus.NoData;
-                result.Message = "Логи не найдены (в том числе внутри архивов)";
-                //return result;
-            }
-
-            //Create result archive
-            string resultZipPath = Path.Combine(outputDirectory, $"{server.IpAddress}_{DateTime.Now:yyyyMMdd_HHmmss}.zip");
-
-            var processedLogs = new List<ProcessedLogInfo>
-            {
-                new ProcessedLogInfo
-                {
-                    ServerIp = server.IpAddress,
-                    ServerName = server.HostName,
-                    TempFilePath = resultFilePath,
-                    LogDate = startDate
-                }
-            };
-
-            progress?.Report("Формирование итогового ZIP-архива...");
-            _archiveManager.CreateResultArchive(resultZipPath, processedLogs, archiveProgress);
-
-            result.ResultFilePath = resultZipPath;
-            result.Status = CollectionStatus.Success;
-            result.Message = $"Успешно собрано и упаковано {allLogFilesToProcess.Count} файл(ов)";
-
-            progress?.Report($"Сбор с {server.HostName} завершен. Архив: {Path.GetFileName(resultZipPath)}");
         }
         catch (OperationCanceledException)
         {
@@ -168,6 +176,16 @@ public class LogCollectionService
         }
         finally
         {
+            // ОЧИСТКА
+            if (Directory.Exists(serverTempDir))
+            {
+                try
+                {
+                    Directory.Delete(serverTempDir, recursive: true);
+                    progress?.Report("Временные файлы удалены");
+                }
+                catch { /* Игнорируем ошибки очистки */ }
+            }
             result.EndTime = DateTime.Now;
         }
 

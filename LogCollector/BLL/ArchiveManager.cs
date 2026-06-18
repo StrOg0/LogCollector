@@ -119,6 +119,8 @@ namespace LogCollector.BLL
                 Message = $"Начало формирования итогового архива ({totalFiles} серверов)..."
             });
 
+            var addedEntries = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
             using (ZipArchive archive = ZipFile.Open(destinationArchivePath, ZipArchiveMode.Create))
             {
                 foreach (var logInfo in logsList)
@@ -139,9 +141,10 @@ namespace LogCollector.BLL
                     {
                         string entryName = $"{logInfo.ServerIp}.log";
 
-                        if (archive.Entries.Any(e => e.FullName == entryName))
+                        if (!addedEntries.Add(entryName))
                         {
                             entryName = $"{logInfo.ServerIp}_part{currentFileIndex}.log";
+                            addedEntries.Add(entryName);
                         }
 
                         archive.CreateEntryFromFile(logInfo.TempFilePath, entryName, CompressionLevel.Optimal);
