@@ -6,10 +6,12 @@ namespace LogCollector.BLL;
 public class LogCollectionService
 {
     private readonly ISshFileHandler _sshHandler;
+    private readonly IArchiveManager _archiveManager;
 
-    public LogCollectionService(ISshFileHandler sshHandler)
+    public LogCollectionService(ISshFileHandler sshHandler, IArchiveManager archiveManager)
     {
         _sshHandler = sshHandler;
+        _archiveManager = archiveManager;
     }
 
     public async Task<CollectionResult> CollectLogsAsync(
@@ -28,12 +30,21 @@ public class LogCollectionService
             StartTime = DateTime.Now
         };
 
+        // Адаптер прогресса: переводим ArchiveProgressInfo в строку для UI
+        var archiveProgress = new Progress<ArchiveProgressInfo>(info =>
+        {
+            progress?.Report($"[Архив] {info.Message}");
+        });
+
+        string serverTempDir = Path.Combine(tempDirectory, $"server_{server.Id}_{DateTime.Now:yyyyMMdd_HHmmss}");
+
+
         try
         {
             progress?.Report($"Начинаем сбор с сервера {server.HostName} ({server.IpAddress})...");
 
-            string serverTempDir = Path.Combine(tempDirectory, $"server_{server.Id}_{DateTime.Now:yyyyMMdd_HHmmss}");
             Directory.CreateDirectory(serverTempDir);
+            Directory.CreateDirectory(outputDirectory);
 
             progress?.Report($"Получение списка файлов с {server.HostName}...");
             var files = await _sshHandler.GetFilesListAsync(
@@ -92,6 +103,58 @@ public class LogCollectionService
             }
 
             progress?.Report($"Сбор с {server.HostName} завершен");
+
+            //Unpack archives
+            progress?.Report("Анализ скачанных файлов и распаковка архивов...");
+            var allLogFilesToProcess = new List<string>();
+
+            foreach (var file in downloadedFiles)
+            {
+                string ext = Path.GetExtension(file).ToLowerInvariant();
+                string fileName = Path.GetFileName(file).ToLowerInvariant();
+
+                // Если это архив - распаковываем рекурсивно
+                if (ext == ".zip" || fileName.EndsWith(".tar.gz") || fileName.EndsWith(".tgz"))
+                {
+                    var extractedLogs = _archiveManager.ExtractArchives(file, serverTempDir, archiveProgress);
+                    allLogFilesToProcess.AddRange(extractedLogs);
+                }
+                // Если это сразу лог - берем его
+                else if (ext == ".log")
+                {
+                    allLogFilesToProcess.Add(file);
+                }
+            }
+
+            if (allLogFilesToProcess.Count == 0)
+            {
+                result.Status = CollectionStatus.NoData;
+                result.Message = "Логи не найдены (в том числе внутри архивов)";
+                return result;
+            }
+
+            // === ЭТАП 4: УПАКОВКА В ИТОГОВЫЙ ZIP (Ваш модуль Archive) ===
+            string resultZipPath = Path.Combine(outputDirectory, $"{server.IpAddress}_{DateTime.Now:yyyyMMdd_HHmmss}.zip");
+
+            var processedLogs = new List<ProcessedLogInfo>
+            {
+                new ProcessedLogInfo
+                {
+                    ServerIp = server.IpAddress,
+                    ServerName = server.HostName,
+                    TempFilePath = serverTempDir,
+                    LogDate = startDate
+                }
+            };
+
+            progress?.Report("Формирование итогового ZIP-архива...");
+            _archiveManager.CreateResultArchive(resultZipPath, processedLogs, archiveProgress);
+
+            result.ResultFilePath = resultZipPath;
+            result.Status = CollectionStatus.Success;
+            result.Message = $"Успешно собрано и упаковано {allLogFilesToProcess.Count} файл(ов)";
+
+            progress?.Report($"Сбор с {server.HostName} завершен. Архив: {Path.GetFileName(resultZipPath)}");
         }
         catch (OperationCanceledException)
         {
