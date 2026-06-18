@@ -113,13 +113,11 @@ public class LogCollectionService
                 string ext = Path.GetExtension(file).ToLowerInvariant();
                 string fileName = Path.GetFileName(file).ToLowerInvariant();
 
-                // Если это архив - распаковываем рекурсивно
                 if (ext == ".zip" || fileName.EndsWith(".tar.gz") || fileName.EndsWith(".tgz"))
                 {
                     var extractedLogs = _archiveManager.ExtractArchives(file, serverTempDir, archiveProgress);
                     allLogFilesToProcess.AddRange(extractedLogs);
                 }
-                // Если это сразу лог - берем его
                 else if (ext == ".log")
                 {
                     allLogFilesToProcess.Add(file);
@@ -130,10 +128,10 @@ public class LogCollectionService
             {
                 result.Status = CollectionStatus.NoData;
                 result.Message = "Логи не найдены (в том числе внутри архивов)";
-                return result;
+                //return result;
             }
 
-            // === ЭТАП 4: УПАКОВКА В ИТОГОВЫЙ ZIP (Ваш модуль Archive) ===
+            //Create result archive
             string resultZipPath = Path.Combine(outputDirectory, $"{server.IpAddress}_{DateTime.Now:yyyyMMdd_HHmmss}.zip");
 
             var processedLogs = new List<ProcessedLogInfo>
@@ -142,7 +140,7 @@ public class LogCollectionService
                 {
                     ServerIp = server.IpAddress,
                     ServerName = server.HostName,
-                    TempFilePath = serverTempDir,
+                    TempFilePath = resultFilePath,
                     LogDate = startDate
                 }
             };
