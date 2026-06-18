@@ -89,15 +89,17 @@ namespace LogCollector.BLL
             return extractedLogFiles;
         }
 
-        public string CreateResultArchive(string destinationArchivePath, Dictionary<string, string> logsByServer, IProgress<ArchiveProgressInfo> progress = null)
+        public string CreateResultArchive(string destinationArchivePath, IEnumerable<ProcessedLogInfo> processedLogs, IProgress<ArchiveProgressInfo> progress = null)
         {
-            if (logsByServer == null || !logsByServer.Any())
+            var logsList = processedLogs.ToList();
+
+            if (!logsList.Any())
                 throw new ArgumentException("Нет данных для упаковки в итоговый архив.");
 
             if (File.Exists(destinationArchivePath))
                 File.Delete(destinationArchivePath);
 
-            int totalFiles = logsByServer.Count;
+            int totalFiles = logsList.Count;
             int currentFileIndex = 0;
 
             progress?.Report(new ArchiveProgressInfo
@@ -108,33 +110,41 @@ namespace LogCollector.BLL
 
             using (ZipArchive archive = ZipFile.Open(destinationArchivePath, ZipArchiveMode.Create))
             {
-                foreach (var kvp in logsByServer)
+                foreach (var logInfo in logsList)
                 {
                     currentFileIndex++;
-                    string serverIp = kvp.Key;
-                    string tempLogPath = kvp.Value;
 
                     progress?.Report(new ArchiveProgressInfo
                     {
                         Stage = "Упаковка",
-                        Message = $"Упаковка лога для сервера {serverIp} ({currentFileIndex}/{totalFiles})",
-                        Percent = (currentFileIndex * 100) / totalFiles
+                        Message = $"Упаковка лога для {logInfo.ServerIp} ({logInfo.ServerName}) ({currentFileIndex}/{totalFiles})",
+                        Percent = (currentFileIndex * 90) / totalFiles
                     });
 
-                    if (File.Exists(tempLogPath))
+
+                    if (File.Exists(logInfo.TempFilePath))
                     {
-                        string entryName = $"{serverIp}.log";
-                        archive.CreateEntryFromFile(tempLogPath, entryName, CompressionLevel.Optimal);
+                        string entryName = $"{logInfo.ServerIp}.log";
+
+                        if (archive.Entries.Any(e => e.FullName == entryName))
+                        {
+                            entryName = $"{logInfo.ServerIp}_part{currentFileIndex}.log";
+                        }
+
+                        archive.CreateEntryFromFile(logInfo.TempFilePath, entryName, CompressionLevel.Optimal);
                     }
                 }
+                progress?.Report(new ArchiveProgressInfo
+                {
+                    Stage = "Упаковка",
+                    Message = $"Итоговый архив успешно сформирован: {Path.GetFileName(destinationArchivePath)}",
+                    Percent = 100
+                });
+
+
             }
 
-            progress?.Report(new ArchiveProgressInfo
-            {
-                Stage = "Упаковка",
-                Message = $"Итоговый архив успешно сформирован: {Path.GetFileName(destinationArchivePath)}",
-                Percent = 100
-            });
+            
 
             return destinationArchivePath;
         }
