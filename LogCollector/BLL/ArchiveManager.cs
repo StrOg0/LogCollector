@@ -2,6 +2,7 @@
 using LogCollector.Models;
 using SharpCompress.Archives;
 using SharpCompress.Common;
+using System.Diagnostics;
 using System.IO.Compression;
 
 namespace LogCollector.BLL
@@ -20,6 +21,8 @@ namespace LogCollector.BLL
             archivesToProcess.Enqueue(sourceArchivePath);
             int processedArchivesCount = 0;
 
+            Debug.WriteLine($"[ArchiveManager] Начало распаковки: {sourceArchivePath}");
+
             progress?.Report(new ArchiveProgressInfo
             {
                 Stage = "Распаковка",
@@ -32,6 +35,8 @@ namespace LogCollector.BLL
                 string currentArchive = archivesToProcess.Dequeue();
                 processedArchivesCount++;
 
+                Debug.WriteLine($"[ArchiveManager] [{processedArchivesCount}] Распаковка: {Path.GetFileName(currentArchive)}");
+                
                 progress?.Report(new ArchiveProgressInfo
                 {
                     Stage = "Распаковка",
@@ -52,6 +57,8 @@ namespace LogCollector.BLL
                 }
                 catch (Exception ex)
                 {
+                    Debug.WriteLine($"[ArchiveManager] ОШИБКА распаковки {currentArchive}: {ex.Message}");
+
                     progress?.Report(new ArchiveProgressInfo
                     {
                         Stage = "Ошибка",
@@ -79,6 +86,8 @@ namespace LogCollector.BLL
                 });
             }
 
+            Debug.WriteLine($"[ArchiveManager] Распаковка завершена. Найдено логов: {extractedLogFiles.Count}");
+
             progress?.Report(new ArchiveProgressInfo
             {
                 Stage = "Распаковка",
@@ -102,6 +111,8 @@ namespace LogCollector.BLL
             int totalFiles = logsList.Count;
             int currentFileIndex = 0;
 
+            Debug.WriteLine($"[ArchiveManager] Начало упаковки итогового архива. Файлов: {totalFiles}");
+
             progress?.Report(new ArchiveProgressInfo
             {
                 Stage = "Упаковка",
@@ -113,6 +124,8 @@ namespace LogCollector.BLL
                 foreach (var logInfo in logsList)
                 {
                     currentFileIndex++;
+                   
+                    Debug.WriteLine($"[ArchiveManager] Упаковка: {logInfo.ServerIp} ({currentFileIndex}/{totalFiles})");
 
                     progress?.Report(new ArchiveProgressInfo
                     {
@@ -134,17 +147,16 @@ namespace LogCollector.BLL
                         archive.CreateEntryFromFile(logInfo.TempFilePath, entryName, CompressionLevel.Optimal);
                     }
                 }
+
+                Debug.WriteLine($"[ArchiveManager] Итоговый архив сформирован: {destinationArchivePath}");
+
                 progress?.Report(new ArchiveProgressInfo
                 {
                     Stage = "Упаковка",
                     Message = $"Итоговый архив успешно сформирован: {Path.GetFileName(destinationArchivePath)}",
                     Percent = 100
                 });
-
-
             }
-
-            
 
             return destinationArchivePath;
         }
