@@ -1,0 +1,37 @@
+﻿StorageServerRuntime Error: 0 : 
+An attempt to connect to invalid base was perfomed. Base name: .
+
+	Method name: 
+	Param1: 
+	Param2: 
+	Stack trace:    at DocsVision.Platform.StorageServer.Data.DatabaseParameters..ctor(IApplication application, String baseName)
+   at DocsVision.Platform.StorageServer.Application.ApplicationHelper.GetDatabaseParams(IApplication application, String baseName)
+   at DocsVision.Platform.StorageServer.Application.ApplicationHelper.CreateDatabaseRequest(IApplication application, String baseName, LogStrategyEnum logStrategy)
+   at Platform.StorageServer.WebApi.Controllers.LoginController.Post(Login loginRequest)
+   at lambda_method11(Closure , Object )
+   at Microsoft.Extensions.Internal.ObjectMethodExecutorAwaitable.Awaiter.GetResult()
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.AwaitableObjectResultExecutor.Execute(IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeNextResourceFilter>g__Awaited|25_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.Rethrow(ResourceExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.InvokeFilterPipelineAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Builder.RouterMiddleware.Invoke(HttpContext httpContext)
+   at SoapCore.SoapEndpointMiddleware`1.Invoke(HttpContext httpContext, IServiceProvider serviceProvider)
+   at Platform.StorageServer.WebApi.Startup.<>c.<<Configure>b__8_0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Platform.StorageServer.WebApi.SessionRequestMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Diagnostics.StatusCodePagesMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.ResponseCompression.ResponseCompressionMiddleware.InvokeCore(HttpContext context)
+   at Platform.StorageServer.WebApi.DeflateMiddleware.Invoke(HttpContext context)
+   at Platform.StorageServer.WebApi.StorageServerExceptionHandlerMiddleware.Invoke(HttpContext context)
+    ProcessId=12
+    DateTime=2026-06-08T12:30:27.5492063+03:00

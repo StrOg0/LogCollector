@@ -1,0 +1,293 @@
+﻿StorageServerRuntime Error: 0 : Database version mismatch. Base name: docsvision. Base version: 7941. Server version: 7876.
+    ProcessId=12
+    DateTime=2026-06-07T02:15:41.0709653+03:00
+StorageServerRuntime Error: 0 : 
+Internal exception, error code: InvalidRow.
+
+	Method name: 
+	Param1: dde59b10-cb40-439a-90ca-f20c8c851afb
+	Stack trace:    at DocsVision.Platform.Data.PgSqlDatabaseCommand.CheckError() in /src/Core/Platform/Platform.StorageServer.Data.PgSql/Platform/Data/PgSqlDatabaseCommand.cs:line 32
+   at DocsVision.Platform.Data.DatabaseCommand.ExecuteScalar[T]() in /src/Core/Platform/Platform.StorageServer.Data/Platform/Data/DatabaseCommand.cs:line 262
+   at DocsVision.Platform.Data.PgSqlDatabaseCommand.ExecuteScalar[T]() in /src/Core/Platform/Platform.StorageServer.Data.PgSql/Platform/Data/PgSqlDatabaseCommand.cs:line 150
+   at DocsVision.Platform.StorageServer.Data.SecGetObjectSdidCommand.Execute() in /src/Core/Platform/Platform.StorageServer.Data.PgSql/Platform/StorageServer/Data/PgSqlDataLayer.Generated.cs:line 42833
+   at DocsVision.Platform.StorageServer.Data.PgSqlDataLayer.SecurityGetObjectSdid(SecureObjectType objectType, Guid objectId, Guid locactionId) in /src/Core/Platform/Platform.StorageServer.Data.PgSql/Platform/StorageServer/Data/PgSqlDataLayer.cs:line 1850
+   at DocsVision.Platform.StorageServer.Security.SecurityMethodsNew.GetObjectSecurityDescriptorId(SecureObject secureObject)
+   at DocsVision.Platform.StorageServer.Security.SecurityMethodsNew.GetObjectSecurityDescriptor(SecureObject secureObject)
+   at DocsVision.Platform.StorageServer.Security.SecurityMethodsNew.AccessCheckObject(SecureObject secureObject, Guid objectType, AccessRights accessMask, AccessRights& allowedMask, Boolean throwIfDenied)
+   at DocsVision.Platform.StorageServer.Security.SecurityMethodsNew.AccessCheckRow(Guid rowId, Guid sectionTypeId, AccessRights accessMask, Boolean throwIfDenied)
+   at DocsVision.Platform.StorageServer.Cards.RowMethodsHelper.AccessCheckRow(ISecurityMethods securityMethods, RowInfo rowInfo, AccessRights accessMask, Boolean throwIfDenied)
+   at DocsVision.Platform.StorageServer.Cards.RowMethods.GetRowData(Guid sectionId, Guid rowId, Guid instanceId, Boolean skipAccessCheck)
+   at DocsVision.Platform.StorageServer.LocalTransport.LocalTransportLayer.<>c__DisplayClass51_0.<RowGetData>b__0(SessionRequestContext ctx)
+   at DocsVision.Platform.StorageServer.LocalTransport.LocalTransportLayer.Execute[T](Func`2 action, Boolean transaction)
+    ProcessId=12
+    DateTime=2026-06-07T07:00:18.6399172+03:00
+StorageServerRuntime Error: 0 : 
+Internal exception, error code: InvalidRow.
+
+	Method name: 
+	Param1: 4913adea-fdcb-4b4a-a68d-ab1245ac2d93
+	Stack trace:    at DocsVision.Platform.Data.PgSqlDatabaseCommand.CheckError() in /src/Core/Platform/Platform.StorageServer.Data.PgSql/Platform/Data/PgSqlDatabaseCommand.cs:line 32
+   at DocsVision.Platform.Data.DatabaseCommand.ExecuteScalar[T]() in /src/Core/Platform/Platform.StorageServer.Data/Platform/Data/DatabaseCommand.cs:line 262
+   at DocsVision.Platform.Data.PgSqlDatabaseCommand.ExecuteScalar[T]() in /src/Core/Platform/Platform.StorageServer.Data.PgSql/Platform/Data/PgSqlDatabaseCommand.cs:line 150
+   at DocsVision.Platform.StorageServer.Data.SecGetObjectSdidCommand.Execute() in /src/Core/Platform/Platform.StorageServer.Data.PgSql/Platform/StorageServer/Data/PgSqlDataLayer.Generated.cs:line 42833
+   at DocsVision.Platform.StorageServer.Data.PgSqlDataLayer.SecurityGetObjectSdid(SecureObjectType objectType, Guid objectId, Guid locactionId) in /src/Core/Platform/Platform.StorageServer.Data.PgSql/Platform/StorageServer/Data/PgSqlDataLayer.cs:line 1850
+   at DocsVision.Platform.StorageServer.Security.SecurityMethodsNew.GetObjectSecurityDescriptorId(SecureObject secureObject)
+   at DocsVision.Platform.StorageServer.Security.SecurityMethodsNew.GetObjectSecurityDescriptor(SecureObject secureObject)
+   at DocsVision.Platform.StorageServer.Security.SecurityMethodsNew.AccessCheckObject(SecureObject secureObject, Guid objectType, AccessRights accessMask, AccessRights& allowedMask, Boolean throwIfDenied)
+   at DocsVision.Platform.StorageServer.Security.SecurityMethodsNew.AccessCheckRow(Guid rowId, Guid sectionTypeId, AccessRights accessMask, Boolean throwIfDenied)
+   at DocsVision.Platform.StorageServer.Cards.RowMethodsHelper.AccessCheckRow(ISecurityMethods securityMethods, RowInfo rowInfo, AccessRights accessMask, Boolean throwIfDenied)
+   at DocsVision.Platform.StorageServer.Cards.RowMethods.GetRowData(Guid sectionId, Guid rowId, Guid instanceId, Boolean skipAccessCheck)
+   at DocsVision.Platform.StorageServer.LocalTransport.LocalTransportLayer.<>c__DisplayClass51_0.<RowGetData>b__0(SessionRequestContext ctx)
+   at DocsVision.Platform.StorageServer.LocalTransport.LocalTransportLayer.Execute[T](Func`2 action, Boolean transaction)
+    ProcessId=12
+    DateTime=2026-06-07T07:00:23.4942867+03:00
+StorageServerRuntime Error: 0 : 
+Internal exception, error code: InvalidRow.
+
+	Method name: 
+	Param1: d7407e8c-0b6a-45ec-bc98-9f7933ce3831
+	Param2: 
+	Stack trace:    at DocsVision.Platform.Data.PgSqlDatabaseCommand.CheckError() in /src/Core/Platform/Platform.StorageServer.Data.PgSql/Platform/Data/PgSqlDatabaseCommand.cs:line 32
+   at DocsVision.Platform.Data.DatabaseCommand.ExecuteScalar[T]() in /src/Core/Platform/Platform.StorageServer.Data/Platform/Data/DatabaseCommand.cs:line 262
+   at DocsVision.Platform.Data.PgSqlDatabaseCommand.ExecuteScalar[T]() in /src/Core/Platform/Platform.StorageServer.Data.PgSql/Platform/Data/PgSqlDatabaseCommand.cs:line 150
+   at DocsVision.Platform.StorageServer.Data.SecGetObjectSdidCommand.Execute() in /src/Core/Platform/Platform.StorageServer.Data.PgSql/Platform/StorageServer/Data/PgSqlDataLayer.Generated.cs:line 42833
+   at DocsVision.Platform.StorageServer.Data.PgSqlDataLayer.SecurityGetObjectSdid(SecureObjectType objectType, Guid objectId, Guid locactionId) in /src/Core/Platform/Platform.StorageServer.Data.PgSql/Platform/StorageServer/Data/PgSqlDataLayer.cs:line 1850
+   at DocsVision.Platform.StorageServer.Security.SecurityMethodsNew.GetObjectSecurityDescriptorId(SecureObject secureObject)
+   at DocsVision.Platform.StorageServer.Security.SecurityMethodsNew.GetObjectSecurityDescriptor(SecureObject secureObject)
+   at DocsVision.Platform.StorageServer.Security.SecurityMethodsNew.AccessCheckObject(SecureObject secureObject, Guid objectType, AccessRights accessMask, AccessRights& allowedMask, Boolean throwIfDenied)
+   at DocsVision.Platform.StorageServer.Security.SecurityMethodsNew.AccessCheckRow(Guid rowId, Guid sectionTypeId, AccessRights accessMask, Boolean throwIfDenied)
+   at DocsVision.Platform.StorageServer.Cards.RowMethodsHelper.AccessCheckRow(ISecurityMethods securityMethods, RowInfo rowInfo, AccessRights accessMask, Boolean throwIfDenied)
+   at DocsVision.Platform.StorageServer.Cards.RowMethods.GetRowData(Guid sectionId, Guid rowId, Guid instanceId, Boolean skipAccessCheck)
+   at lambda_method65(Closure , Object , Object[] )
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.SyncObjectResultExecutor.Execute(IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeActionMethodAsync()
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeNextActionFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeNextResourceFilter>g__Awaited|25_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.Rethrow(ResourceExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.InvokeFilterPipelineAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Builder.RouterMiddleware.Invoke(HttpContext httpContext)
+   at SoapCore.SoapEndpointMiddleware`1.Invoke(HttpContext httpContext, IServiceProvider serviceProvider)
+   at Platform.StorageServer.WebApi.Startup.<>c.<<Configure>b__8_0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Platform.StorageServer.WebApi.SessionRequestMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Diagnostics.StatusCodePagesMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.ResponseCompression.ResponseCompressionMiddleware.InvokeCore(HttpContext context)
+   at Platform.StorageServer.WebApi.DeflateMiddleware.Invoke(HttpContext context)
+   at Platform.StorageServer.WebApi.StorageServerExceptionHandlerMiddleware.Invoke(HttpContext context)
+    ProcessId=12
+    DateTime=2026-06-07T07:00:31.0727492+03:00
+StorageServerRuntime Error: 0 : 
+Internal exception, error code: InvalidRow.
+
+	Method name: 
+	Param1: be11cd73-26f1-4e66-8fc1-57c61b04e0e7
+	Param2: 
+	Stack trace:    at DocsVision.Platform.Data.PgSqlDatabaseCommand.CheckError() in /src/Core/Platform/Platform.StorageServer.Data.PgSql/Platform/Data/PgSqlDatabaseCommand.cs:line 32
+   at DocsVision.Platform.Data.DatabaseCommand.ExecuteScalar[T]() in /src/Core/Platform/Platform.StorageServer.Data/Platform/Data/DatabaseCommand.cs:line 262
+   at DocsVision.Platform.Data.PgSqlDatabaseCommand.ExecuteScalar[T]() in /src/Core/Platform/Platform.StorageServer.Data.PgSql/Platform/Data/PgSqlDatabaseCommand.cs:line 150
+   at DocsVision.Platform.StorageServer.Data.SecGetObjectSdidCommand.Execute() in /src/Core/Platform/Platform.StorageServer.Data.PgSql/Platform/StorageServer/Data/PgSqlDataLayer.Generated.cs:line 42833
+   at DocsVision.Platform.StorageServer.Data.PgSqlDataLayer.SecurityGetObjectSdid(SecureObjectType objectType, Guid objectId, Guid locactionId) in /src/Core/Platform/Platform.StorageServer.Data.PgSql/Platform/StorageServer/Data/PgSqlDataLayer.cs:line 1850
+   at DocsVision.Platform.StorageServer.Security.SecurityMethodsNew.GetObjectSecurityDescriptorId(SecureObject secureObject)
+   at DocsVision.Platform.StorageServer.Security.SecurityMethodsNew.GetObjectSecurityDescriptor(SecureObject secureObject)
+   at DocsVision.Platform.StorageServer.Security.SecurityMethodsNew.AccessCheckObject(SecureObject secureObject, Guid objectType, AccessRights accessMask, AccessRights& allowedMask, Boolean throwIfDenied)
+   at DocsVision.Platform.StorageServer.Security.SecurityMethodsNew.AccessCheckRow(Guid rowId, Guid sectionTypeId, AccessRights accessMask, Boolean throwIfDenied)
+   at DocsVision.Platform.StorageServer.Cards.RowMethodsHelper.AccessCheckRow(ISecurityMethods securityMethods, RowInfo rowInfo, AccessRights accessMask, Boolean throwIfDenied)
+   at DocsVision.Platform.StorageServer.Cards.RowMethods.GetRowData(Guid sectionId, Guid rowId, Guid instanceId, Boolean skipAccessCheck)
+   at lambda_method65(Closure , Object , Object[] )
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.SyncObjectResultExecutor.Execute(IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeActionMethodAsync()
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeNextActionFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeNextResourceFilter>g__Awaited|25_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.Rethrow(ResourceExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.InvokeFilterPipelineAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Builder.RouterMiddleware.Invoke(HttpContext httpContext)
+   at SoapCore.SoapEndpointMiddleware`1.Invoke(HttpContext httpContext, IServiceProvider serviceProvider)
+   at Platform.StorageServer.WebApi.Startup.<>c.<<Configure>b__8_0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Platform.StorageServer.WebApi.SessionRequestMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Diagnostics.StatusCodePagesMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.ResponseCompression.ResponseCompressionMiddleware.InvokeCore(HttpContext context)
+   at Platform.StorageServer.WebApi.DeflateMiddleware.Invoke(HttpContext context)
+   at Platform.StorageServer.WebApi.StorageServerExceptionHandlerMiddleware.Invoke(HttpContext context)
+    ProcessId=12
+    DateTime=2026-06-07T08:35:17.5916842+03:00
+StorageServerRuntime Error: 0 : 
+Internal exception, error code: InvalidRow.
+
+	Method name: 
+	Param1: f1bc0cf1-8b0b-40cf-84cb-b309e90d63fb
+	Param2: 
+	Stack trace:    at DocsVision.Platform.Data.PgSqlDatabaseCommand.CheckError() in /src/Core/Platform/Platform.StorageServer.Data.PgSql/Platform/Data/PgSqlDatabaseCommand.cs:line 32
+   at DocsVision.Platform.Data.DatabaseCommand.ExecuteScalar[T]() in /src/Core/Platform/Platform.StorageServer.Data/Platform/Data/DatabaseCommand.cs:line 262
+   at DocsVision.Platform.Data.PgSqlDatabaseCommand.ExecuteScalar[T]() in /src/Core/Platform/Platform.StorageServer.Data.PgSql/Platform/Data/PgSqlDatabaseCommand.cs:line 150
+   at DocsVision.Platform.StorageServer.Data.SecGetObjectSdidCommand.Execute() in /src/Core/Platform/Platform.StorageServer.Data.PgSql/Platform/StorageServer/Data/PgSqlDataLayer.Generated.cs:line 42833
+   at DocsVision.Platform.StorageServer.Data.PgSqlDataLayer.SecurityGetObjectSdid(SecureObjectType objectType, Guid objectId, Guid locactionId) in /src/Core/Platform/Platform.StorageServer.Data.PgSql/Platform/StorageServer/Data/PgSqlDataLayer.cs:line 1850
+   at DocsVision.Platform.StorageServer.Security.SecurityMethodsNew.GetObjectSecurityDescriptorId(SecureObject secureObject)
+   at DocsVision.Platform.StorageServer.Security.SecurityMethodsNew.GetObjectSecurityDescriptor(SecureObject secureObject)
+   at DocsVision.Platform.StorageServer.Security.SecurityMethodsNew.AccessCheckObject(SecureObject secureObject, Guid objectType, AccessRights accessMask, AccessRights& allowedMask, Boolean throwIfDenied)
+   at DocsVision.Platform.StorageServer.Security.SecurityMethodsNew.AccessCheckRow(Guid rowId, Guid sectionTypeId, AccessRights accessMask, Boolean throwIfDenied)
+   at DocsVision.Platform.StorageServer.Cards.RowMethodsHelper.AccessCheckRow(ISecurityMethods securityMethods, RowInfo rowInfo, AccessRights accessMask, Boolean throwIfDenied)
+   at DocsVision.Platform.StorageServer.Cards.RowMethods.GetRowData(Guid sectionId, Guid rowId, Guid instanceId, Boolean skipAccessCheck)
+   at lambda_method65(Closure , Object , Object[] )
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.SyncObjectResultExecutor.Execute(IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeActionMethodAsync()
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeNextActionFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeNextResourceFilter>g__Awaited|25_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.Rethrow(ResourceExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.InvokeFilterPipelineAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Builder.RouterMiddleware.Invoke(HttpContext httpContext)
+   at SoapCore.SoapEndpointMiddleware`1.Invoke(HttpContext httpContext, IServiceProvider serviceProvider)
+   at Platform.StorageServer.WebApi.Startup.<>c.<<Configure>b__8_0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Platform.StorageServer.WebApi.SessionRequestMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Diagnostics.StatusCodePagesMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.ResponseCompression.ResponseCompressionMiddleware.InvokeCore(HttpContext context)
+   at Platform.StorageServer.WebApi.DeflateMiddleware.Invoke(HttpContext context)
+   at Platform.StorageServer.WebApi.StorageServerExceptionHandlerMiddleware.Invoke(HttpContext context)
+    ProcessId=12
+    DateTime=2026-06-07T08:38:15.5335490+03:00
+StorageServerRuntime Error: 0 : 
+Internal exception, error code: InvalidRow.
+
+	Method name: 
+	Param1: 56efcfeb-7c2a-4518-b3c7-f9b61e1fcdf4
+	Param2: 
+	Stack trace:    at DocsVision.Platform.Data.DatabaseCommand.ExecuteScalar[T]() in /src/Core/Platform/Platform.StorageServer.Data/Platform/Data/DatabaseCommand.cs:line 270
+   at DocsVision.Platform.StorageServer.Data.SecGetObjectSdidCommand.Execute() in /src/Core/Platform/Platform.StorageServer.Data.PgSql/Platform/StorageServer/Data/PgSqlDataLayer.Generated.cs:line 42833
+   at DocsVision.Platform.StorageServer.Data.PgSqlDataLayer.SecurityGetObjectSdid(SecureObjectType objectType, Guid objectId, Guid locactionId) in /src/Core/Platform/Platform.StorageServer.Data.PgSql/Platform/StorageServer/Data/PgSqlDataLayer.cs:line 1850
+   at DocsVision.Platform.StorageServer.Security.SecurityMethodsNew.GetObjectSecurityDescriptorId(SecureObject secureObject)
+   at DocsVision.Platform.StorageServer.Security.SecurityMethodsNew.GetObjectSecurityDescriptor(SecureObject secureObject)
+   at DocsVision.Platform.StorageServer.Security.SecurityMethodsNew.AccessCheckObject(SecureObject secureObject, Guid objectType, AccessRights accessMask, AccessRights& allowedMask, Boolean throwIfDenied)
+   at DocsVision.Platform.StorageServer.Security.SecurityMethodsNew.AccessCheckRow(Guid rowId, Guid sectionTypeId, AccessRights accessMask, Boolean throwIfDenied)
+   at DocsVision.Platform.StorageServer.Cards.RowMethodsHelper.AccessCheckRow(ISecurityMethods securityMethods, RowInfo rowInfo, AccessRights accessMask, Boolean throwIfDenied)
+   at DocsVision.Platform.StorageServer.Cards.RowMethods.GetRowData(Guid sectionId, Guid rowId, Guid instanceId, Boolean skipAccessCheck)
+   at lambda_method65(Closure , Object , Object[] )
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.SyncObjectResultExecutor.Execute(IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeActionMethodAsync()
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeNextActionFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeNextResourceFilter>g__Awaited|25_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.Rethrow(ResourceExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.InvokeFilterPipelineAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Builder.RouterMiddleware.Invoke(HttpContext httpContext)
+   at SoapCore.SoapEndpointMiddleware`1.Invoke(HttpContext httpContext, IServiceProvider serviceProvider)
+   at Platform.StorageServer.WebApi.Startup.<>c.<<Configure>b__8_0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Platform.StorageServer.WebApi.SessionRequestMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Diagnostics.StatusCodePagesMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.ResponseCompression.ResponseCompressionMiddleware.InvokeCore(HttpContext context)
+   at Platform.StorageServer.WebApi.DeflateMiddleware.Invoke(HttpContext context)
+   at Platform.StorageServer.WebApi.StorageServerExceptionHandlerMiddleware.Invoke(HttpContext context)
+    ProcessId=12
+    DateTime=2026-06-07T09:48:14.7187797+03:00
+StorageServerRuntime Error: 0 : 
+Internal exception, error code: InvalidRow.
+
+	Method name: 
+	Param1: fcbcffa7-5952-4862-9b72-33463a0180c5
+	Param2: 
+	Stack trace:    at DocsVision.Platform.Data.DatabaseCommand.ExecuteScalar[T]() in /src/Core/Platform/Platform.StorageServer.Data/Platform/Data/DatabaseCommand.cs:line 270
+   at DocsVision.Platform.StorageServer.Data.PgSqlDataLayer.SecurityGetObjectSdid(SecureObjectType objectType, Guid objectId, Guid locactionId) in /src/Core/Platform/Platform.StorageServer.Data.PgSql/Platform/StorageServer/Data/PgSqlDataLayer.cs:line 1853
+   at DocsVision.Platform.StorageServer.Security.SecurityMethodsNew.GetObjectSecurityDescriptorId(SecureObject secureObject)
+   at DocsVision.Platform.StorageServer.Security.SecurityMethodsNew.GetObjectSecurityDescriptor(SecureObject secureObject)
+   at DocsVision.Platform.StorageServer.Security.SecurityMethodsNew.AccessCheckObject(SecureObject secureObject, Guid objectType, AccessRights accessMask, AccessRights& allowedMask, Boolean throwIfDenied)
+   at DocsVision.Platform.StorageServer.Security.SecurityMethodsNew.AccessCheckRow(Guid rowId, Guid sectionTypeId, AccessRights accessMask, Boolean throwIfDenied)
+   at DocsVision.Platform.StorageServer.Cards.RowMethodsHelper.AccessCheckRow(ISecurityMethods securityMethods, RowInfo rowInfo, AccessRights accessMask, Boolean throwIfDenied)
+   at DocsVision.Platform.StorageServer.Cards.RowMethods.GetRowData(Guid sectionId, Guid rowId, Guid instanceId, Boolean skipAccessCheck)
+   at lambda_method65(Closure , Object , Object[] )
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.SyncObjectResultExecutor.Execute(IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeActionMethodAsync()
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeNextActionFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeNextResourceFilter>g__Awaited|25_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.Rethrow(ResourceExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.InvokeFilterPipelineAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Builder.RouterMiddleware.Invoke(HttpContext httpContext)
+   at SoapCore.SoapEndpointMiddleware`1.Invoke(HttpContext httpContext, IServiceProvider serviceProvider)
+   at Platform.StorageServer.WebApi.Startup.<>c.<<Configure>b__8_0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Platform.StorageServer.WebApi.SessionRequestMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Diagnostics.StatusCodePagesMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.ResponseCompression.ResponseCompressionMiddleware.InvokeCore(HttpContext context)
+   at Platform.StorageServer.WebApi.DeflateMiddleware.Invoke(HttpContext context)
+   at Platform.StorageServer.WebApi.StorageServerExceptionHandlerMiddleware.Invoke(HttpContext context)
+    ProcessId=12
+    DateTime=2026-06-07T11:13:16.7048395+03:00
+StorageServerRuntime Error: 0 : 
+Internal exception, error code: InvalidRow.
+
+	Method name: 
+	Param1: 01e22baa-05f1-488d-ae60-62089ffbdfd0
+	Param2: 
+	Stack trace:    at DocsVision.Platform.Data.DatabaseCommand.ExecuteScalar[T]() in /src/Core/Platform/Platform.StorageServer.Data/Platform/Data/DatabaseCommand.cs:line 270
+   at DocsVision.Platform.StorageServer.Data.PgSqlDataLayer.SecurityGetObjectSdid(SecureObjectType objectType, Guid objectId, Guid locactionId) in /src/Core/Platform/Platform.StorageServer.Data.PgSql/Platform/StorageServer/Data/PgSqlDataLayer.cs:line 1853
+   at DocsVision.Platform.StorageServer.Security.SecurityMethodsNew.GetObjectSecurityDescriptorId(SecureObject secureObject)
+   at DocsVision.Platform.StorageServer.Security.SecurityMethodsNew.GetObjectSecurityDescriptor(SecureObject secureObject)
+   at DocsVision.Platform.StorageServer.Security.SecurityMethodsNew.AccessCheckObject(SecureObject secureObject, Guid objectType, AccessRights accessMask, AccessRights& allowedMask, Boolean throwIfDenied)
+   at DocsVision.Platform.StorageServer.Security.SecurityMethodsNew.AccessCheckRow(Guid rowId, Guid sectionTypeId, AccessRights accessMask, Boolean throwIfDenied)
+   at DocsVision.Platform.StorageServer.Cards.RowMethodsHelper.AccessCheckRow(ISecurityMethods securityMethods, RowInfo rowInfo, AccessRights accessMask, Boolean throwIfDenied)
+   at DocsVision.Platform.StorageServer.Cards.RowMethods.GetRowData(Guid sectionId, Guid rowId, Guid instanceId, Boolean skipAccessCheck)
+   at lambda_method65(Closure , Object , Object[] )
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.SyncObjectResultExecutor.Execute(IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeActionMethodAsync()
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeNextActionFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeNextResourceFilter>g__Awaited|25_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.Rethrow(ResourceExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.InvokeFilterPipelineAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Builder.RouterMiddleware.Invoke(HttpContext httpContext)
+   at SoapCore.SoapEndpointMiddleware`1.Invoke(HttpContext httpContext, IServiceProvider serviceProvider)
+   at Platform.StorageServer.WebApi.Startup.<>c.<<Configure>b__8_0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Platform.StorageServer.WebApi.SessionRequestMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Diagnostics.StatusCodePagesMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.ResponseCompression.ResponseCompressionMiddleware.InvokeCore(HttpContext context)
+   at Platform.StorageServer.WebApi.DeflateMiddleware.Invoke(HttpContext context)
+   at Platform.StorageServer.WebApi.StorageServerExceptionHandlerMiddleware.Invoke(HttpContext context)
+    ProcessId=12
+    DateTime=2026-06-07T11:33:17.1009692+03:00
