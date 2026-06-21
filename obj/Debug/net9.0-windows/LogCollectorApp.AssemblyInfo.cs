@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("LogCollectorApp")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+caf8648c0a5aa3f294edddfd5e381fce7db5445d")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a067b19d6c84966c2f16132b396a42820df73d3d")]
 [assembly: System.Reflection.AssemblyProductAttribute("LogCollectorApp")]
 [assembly: System.Reflection.AssemblyTitleAttribute("LogCollectorApp")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

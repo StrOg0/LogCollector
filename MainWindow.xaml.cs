@@ -1,4 +1,4 @@
-﻿using LogCollectorApp.Data;
+﻿﻿using LogCollectorApp.Data;
 using LogCollectorApp.Data.Repositories;
 using LogCollectorApp.Models;
 using LogCollectorApp.Services;
@@ -178,9 +178,9 @@ namespace LogCollectorApp
             }
 
             // Используем заглушку для тестирования
-            var mockSshHandler = new MockSshFileHandler(testLogsPath);
-            var archiveManager = new ArchiveManager();
-            var logCollectionService = new LogCollectionService(mockSshHandler, archiveManager);
+            var sshHandler = new SshFileHandler();
+            var archiveManager = new ArchiveManager(); 
+            var logCollectionService = new LogCollectionService(sshHandler, archiveManager);
 
             var progress = new Progress<string>(message =>
             {
