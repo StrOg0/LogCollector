@@ -7,11 +7,13 @@ public class LogCollectionService
 {
     private readonly ISshFileHandler _sshHandler;
     private readonly IArchiveManager _archiveManager;
+    private readonly ILogSearchModule _logSearchModule;
 
-    public LogCollectionService(ISshFileHandler sshHandler, IArchiveManager archiveManager)
+    public LogCollectionService(ISshFileHandler sshHandler, IArchiveManager archiveManager, ILogSearchModule logSearchModule)
     {
         _sshHandler = sshHandler;
         _archiveManager = archiveManager;
+        _logSearchModule = logSearchModule;
     }
 
     public async Task<CollectionResult> CollectLogsAsync(
@@ -74,22 +76,9 @@ public class LogCollectionService
                     cancellationToken);
             }
 
-            //string resultFileName = $"{server.HostName}_{DateTime.Now:yyyyMMdd_HHmmss}.log";
-            //string resultFilePath = Path.Combine(outputDirectory, resultFileName);
-
             var downloadedFiles = Directory.GetFiles(serverTempDir);
             if (downloadedFiles.Length > 0)
             {
-                //using var resultStream = File.Create(resultFilePath);
-                //foreach (var file in downloadedFiles)
-                //{
-                //    using var fileStream = File.OpenRead(file);
-                //    await fileStream.CopyToAsync(resultStream, cancellationToken);
-                //}
-                //result.ResultFilePath = resultFilePath;
-                //result.Status = CollectionStatus.Success;
-                //result.Message = $"Успешно собрано {downloadedFiles.Length} файл(ов)";
-
                 //Unpack archives
                 progress?.Report("Анализ скачанных файлов и распаковка архивов...");
                 var allLogFilesToProcess = new List<string>();
@@ -117,18 +106,44 @@ public class LogCollectionService
                     return result;
                 }
 
-                // ФИЛЬТРАЦИЯ / СКЛЕЙКА (Заглушка)
-                // Пока нет потокового чтения, мы просто физически склеиваем все найденные .log в один временный файл
-                progress?.Report($"Найдено {allLogFilesToProcess.Count} лог-файлов. Подготовка к упаковке...");
+                progress?.Report($"Найдено {allLogFilesToProcess.Count} лог-файлов. Начинаем потоковую фильтрацию...");
                 string filteredTempFile = Path.Combine(serverTempDir, $"filtered_{server.IpAddress}.log");
 
-                using (var outStream = File.Create(filteredTempFile))
+                // Определяем формат логов (в будущем будет браться из БД на основе группы серверов)
+                LogFormatType logFormat = DetermineLogFormat(server);
+                progress?.Report($"Определен формат логов: {logFormat}");
+
+                long totalLinesFound = 0;
+                bool isFirstFile = true;
+
+                foreach (var logFile in allLogFilesToProcess)
                 {
-                    foreach (var logFile in allLogFilesToProcess)
-                    {
-                        using var inStream = File.OpenRead(logFile);
-                        await inStream.CopyToAsync(outStream, cancellationToken);
-                    }
+                    cancellationToken.ThrowIfCancellationRequested();
+                    progress?.Report($"Фильтрация: {Path.GetFileName(logFile)}...");
+
+                    // Вызываем модуль поиска. 
+                    // isFirstFile: первый файл перезаписывает (append=false), остальные дописывают (append=true)
+                    long linesInFile = await _logSearchModule.SearchLogsAsync(
+                        inputFilePath: logFile,
+                        outputFilePath: filteredTempFile,
+                        startTime: startDate,
+                        endTime: endDate,
+                        searchMask: null, // Маску пока не передаем (будет из БД)
+                        logFormat: logFormat,
+                        append: !isFirstFile
+                    );
+
+                    totalLinesFound += linesInFile;
+                    isFirstFile = false;
+
+                    progress?.Report($"  -> Найдено строк: {linesInFile}");
+                }
+
+                if (totalLinesFound == 0)
+                {
+                    result.Status = CollectionStatus.NoData;
+                    result.Message = "Записи за указанный период не найдены";
+                    return result;
                 }
 
                 //Create result archive
@@ -190,6 +205,19 @@ public class LogCollectionService
         }
 
         return result;
+    }
+
+    // [ИНТЕГРАЦИЯ] Вспомогательный метод определения формата логов
+    // В будущем тип формата будет храниться в БД в таблице групп серверов
+    private LogFormatType DetermineLogFormat(Server server)
+    {
+        // Пока определяем по имени сервера (хардкод)
+        if (server.HostName.Contains("web", StringComparison.OrdinalIgnoreCase) ||
+            server.HostName.Contains("ddm", StringComparison.OrdinalIgnoreCase))
+        {
+            return LogFormatType.Web;
+        }
+        return LogFormatType.App;
     }
 
     public class CollectionResult
