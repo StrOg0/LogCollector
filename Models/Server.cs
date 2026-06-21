@@ -19,7 +19,6 @@ namespace LogCollectorApp.Models
         [MaxLength(150)]
         public string Name { get; set; } = string.Empty;
 
-        // 🔥 ИЗМЕНЕНО: просто string без конвертера
         [Required]
         [Column("ip_address")]
         [MaxLength(50)]
@@ -36,5 +35,11 @@ namespace LogCollectorApp.Models
 
         [ForeignKey("GroupId")]
         public ServerGroup? Group { get; set; }
+
+        /// <summary>
+        /// Флаг выбора сервера для сбора логов (не сохраняется в БД)
+        /// </summary>
+        [NotMapped]
+        public bool IsSelected { get; set; }
     }
 }
