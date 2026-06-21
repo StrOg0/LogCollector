@@ -64,8 +64,8 @@ namespace LogCollector.UI
 
                 var result = await _logService.CollectLogsAsync(
                     server: testServer,
-                    startDate: DateTime.Now.AddDays(-1),
-                    endDate: DateTime.Now,
+                    startDate: new DateTime(2026, 6, 9, 9, 50, 0), // 09.06.2026 09:50:00
+                    endDate: new DateTime(2026, 6, 9, 9, 58, 0),   // 09.06.2026 09:58:00
                     tempDirectory: tempDir,
                     outputDirectory: outputDir,
                     progress: progress,

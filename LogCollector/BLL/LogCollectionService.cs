@@ -110,7 +110,8 @@ public class LogCollectionService
                 string filteredTempFile = Path.Combine(serverTempDir, $"filtered_{server.IpAddress}.log");
 
                 // Определяем формат логов (в будущем будет браться из БД на основе группы серверов)
-                LogFormatType logFormat = DetermineLogFormat(server);
+                //LogFormatType logFormat = DetermineLogFormat(server);
+                LogFormatType logFormat = LogFormatType.Web;
                 progress?.Report($"Определен формат логов: {logFormat}");
 
                 long totalLinesFound = 0;

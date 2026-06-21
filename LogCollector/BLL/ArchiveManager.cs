@@ -172,7 +172,9 @@ namespace LogCollector.BLL
             return lowerPath.EndsWith(".tar.gz") || lowerPath.EndsWith(".tgz") || lowerPath.EndsWith(".tar");
         }
 
-        private bool IsLogFile(string filePath) => filePath.EndsWith(".log", StringComparison.OrdinalIgnoreCase);
+        private bool IsLogFile(string filePath) => 
+            filePath.EndsWith(".log", StringComparison.OrdinalIgnoreCase) || 
+            filePath.EndsWith(".txt", StringComparison.OrdinalIgnoreCase);
 
         private void ExtractTarGz(string archivePath, string extractDir)
         {
