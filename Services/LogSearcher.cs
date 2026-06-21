@@ -40,6 +40,7 @@ public class LogSearcher
 
         Console.WriteLine($"\n=== ПОИСК В ФАЙЛЕ: {Path.GetFileName(filePath)} ===");
         Console.WriteLine($"Ищем время: {startTime:HH:mm} - {endTime:HH:mm}");
+        Console.WriteLine($"Группа: {groupName}");
 
         var allLines = File.ReadAllLines(filePath);
         var foundLines = new List<string>();
@@ -48,92 +49,116 @@ public class LogSearcher
         {
             string trimmedLine = line.TrimStart();
             
-            if (trimmedLine.StartsWith("DateTime=", StringComparison.OrdinalIgnoreCase))
+            // 🔥 РАЗНАЯ ЛОГИКА ДЛЯ APP И WEB
+            if (groupName.ToLower() == "app")
             {
-                var match = Regex.Match(trimmedLine, @"DateTime=\d{4}-\d{2}-\d{2}T(\d{2}):(\d{2}):\d{2}");
+                // App: ищем DateTime=2026-06-08T12:30:42
+                if (trimmedLine.StartsWith("DateTime=", StringComparison.OrdinalIgnoreCase))
+                {
+                    var match = Regex.Match(trimmedLine, @"DateTime=\d{4}-\d{2}-\d{2}T(\d{2}):(\d{2}):\d{2}");
+                    
+                    if (match.Success)
+                    {
+                        int hour = int.Parse(match.Groups[1].Value);
+                        int minute = int.Parse(match.Groups[2].Value);
+                        int logTimeMinutes = hour * 60 + minute;
+                        int startTimeMinutes = startTime.Hour * 60 + startTime.Minute;
+                        int endTimeMinutes = endTime.Hour * 60 + endTime.Minute;
+
+                        if (logTimeMinutes >= startTimeMinutes && logTimeMinutes <= endTimeMinutes)
+                        {
+                            Console.WriteLine($"  ✓ APP: {hour:D2}:{minute:D2}");
+                            foundLines.Add(trimmedLine);
+                        }
+                    }
+                }
+            }
+            else // web
+            {
+                // 🔥 Web: ищем 2026-06-09 08:37:48 в начале строки
+                var match = Regex.Match(trimmedLine, @"^(\d{4}-\d{2}-\d{2}) (\d{2}):(\d{2}):\d{2}");
                 
                 if (match.Success)
                 {
-                    int hour = int.Parse(match.Groups[1].Value);
-                    int minute = int.Parse(match.Groups[2].Value);
+                    int hour = int.Parse(match.Groups[2].Value);
+                    int minute = int.Parse(match.Groups[3].Value);
                     int logTimeMinutes = hour * 60 + minute;
                     int startTimeMinutes = startTime.Hour * 60 + startTime.Minute;
                     int endTimeMinutes = endTime.Hour * 60 + endTime.Minute;
 
                     if (logTimeMinutes >= startTimeMinutes && logTimeMinutes <= endTimeMinutes)
                     {
-                        Console.WriteLine($"  ✓ Найдено: {hour:D2}:{minute:D2}");
+                        Console.WriteLine($"  ✓ WEB: {hour:D2}:{minute:D2}");
                         foundLines.Add(trimmedLine);
                     }
                 }
             }
         }
 
-        Console.WriteLine($"Найдено строк DateTime: {foundLines.Count}");
+        Console.WriteLine($"Найдено строк: {foundLines.Count}");
         return foundLines;
     }
 
-    /// <summary>
-    /// Извлекает полные записи лога
-    /// Структура записи:
-    /// StorageServerRuntime Error: 0 : ...
-    ///     ProcessId=12
-    ///     DateTime=2026-06-08T12:30:42...
-    /// </summary>
-    public static List<string> ExtractFullLogEntries(List<string> foundLines, string[] allLines)
+    public static List<string> ExtractFullLogEntries(List<string> foundLines, string[] allLines, string groupName)
     {
-        Console.WriteLine($"\n=== Извлечение полных записей ===");
-        Console.WriteLine($"Найдено строк DateTime: {foundLines.Count}");
+        Console.WriteLine($"\n=== Извлечение записей (группа: {groupName}) ===");
+        Console.WriteLine($"Найдено строк: {foundLines.Count}");
 
-        var fullEntries = new List<string>();
-        var currentEntry = new List<string>();
-        bool currentEntryHasTarget = false;
-
-        foreach (var line in allLines)
+        if (groupName.ToLower() == "web")
         {
-            string trimmedLine = line.TrimStart();
+            // 🔥 Для web: каждая строка - отдельная запись
+            Console.WriteLine($"WEB: каждая строка - отдельная запись");
+            return foundLines;
+        }
+        else
+        {
+            // Для app: извлекаем полные записи
+            Console.WriteLine($"APP: извлекаем полные записи");
             
-            // Проверяем, начинается ли новая запись
-            if (trimmedLine.StartsWith("StorageServerRuntime", StringComparison.OrdinalIgnoreCase))
-            {
-                // Если предыдущая запись содержала целевое время, сохраняем её
-                if (currentEntryHasTarget && currentEntry.Count > 0)
-                {
-                    fullEntries.Add(string.Join(Environment.NewLine, currentEntry));
-                    Console.WriteLine($"  Сохранена запись ({currentEntry.Count} строк)");
-                }
+            var fullEntries = new List<string>();
+            var currentEntry = new List<string>();
+            bool currentEntryHasTarget = false;
 
-                // Начинаем новую запись
-                currentEntry.Clear();
-                currentEntry.Add(line);
-                currentEntryHasTarget = false;
-            }
-            else
+            foreach (var line in allLines)
             {
-                // Продолжаем текущую запись
-                if (currentEntry.Count > 0)
+                string trimmedLine = line.TrimStart();
+                
+                if (trimmedLine.StartsWith("StorageServerRuntime", StringComparison.OrdinalIgnoreCase))
                 {
-                    currentEntry.Add(line);
-                    
-                    // Проверяем, содержит ли эта строка целевое DateTime
-                    if (!currentEntryHasTarget && foundLines.Any(found => trimmedLine.Contains(found, StringComparison.OrdinalIgnoreCase)))
+                    if (currentEntryHasTarget && currentEntry.Count > 0)
                     {
-                        currentEntryHasTarget = true;
-                        Console.WriteLine($"  Запись содержит целевое время: {trimmedLine}");
+                        fullEntries.Add(string.Join(Environment.NewLine, currentEntry));
+                        Console.WriteLine($"  Сохранена запись ({currentEntry.Count} строк)");
+                    }
+
+                    currentEntry.Clear();
+                    currentEntry.Add(line);
+                    currentEntryHasTarget = false;
+                }
+                else
+                {
+                    if (currentEntry.Count > 0)
+                    {
+                        currentEntry.Add(line);
+                        
+                        if (!currentEntryHasTarget && foundLines.Any(found => trimmedLine.Contains(found, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            currentEntryHasTarget = true;
+                            Console.WriteLine($"  Запись содержит целевое время");
+                        }
                     }
                 }
             }
-        }
 
-        // Не забываем последнюю запись
-        if (currentEntryHasTarget && currentEntry.Count > 0)
-        {
-            fullEntries.Add(string.Join(Environment.NewLine, currentEntry));
-            Console.WriteLine($"  Сохранена запись ({currentEntry.Count} строк)");
-        }
+            if (currentEntryHasTarget && currentEntry.Count > 0)
+            {
+                fullEntries.Add(string.Join(Environment.NewLine, currentEntry));
+                Console.WriteLine($"  Сохранена запись ({currentEntry.Count} строк)");
+            }
 
-        Console.WriteLine($"Всего извлечено полных записей: {fullEntries.Count}");
-        return fullEntries;
+            Console.WriteLine($"Всего извлечено записей: {fullEntries.Count}");
+            return fullEntries;
+        }
     }
 
     private static string GetDatePattern(string groupName, DateTime date)

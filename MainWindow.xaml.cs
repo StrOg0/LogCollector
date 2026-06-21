@@ -9,6 +9,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 
+
 namespace LogCollectorApp
 {
     public partial class MainWindow : Window
@@ -178,7 +179,8 @@ namespace LogCollectorApp
 
             // Используем заглушку для тестирования
             var mockSshHandler = new MockSshFileHandler(testLogsPath);
-            var logCollectionService = new LogCollectionService(mockSshHandler);
+            var archiveManager = new ArchiveManager();
+            var logCollectionService = new LogCollectionService(mockSshHandler, archiveManager);
 
             var progress = new Progress<string>(message =>
             {

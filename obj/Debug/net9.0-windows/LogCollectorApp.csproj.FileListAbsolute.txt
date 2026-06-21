@@ -101,3 +101,4 @@ D:\app\LogCollectorApp\bin\Debug\net9.0-windows\Npgsql.dll
 D:\app\LogCollectorApp\bin\Debug\net9.0-windows\Npgsql.EntityFrameworkCore.PostgreSQL.dll
 D:\app\LogCollectorApp\obj\Debug\net9.0-windows\LogCollectorApp.sourcelink.json
 D:\app\LogCollectorApp\bin\Debug\net9.0-windows\Renci.SshNet.dll
+D:\app\LogCollectorApp\bin\Debug\net9.0-windows\SharpCompress.dll

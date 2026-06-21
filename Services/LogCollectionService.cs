@@ -12,10 +12,12 @@ namespace LogCollectorApp.Services;
 public class LogCollectionService
 {
     private readonly ISshFileHandler _sshHandler;
+    private readonly IArchiveManager _archiveManager;
 
-    public LogCollectionService(ISshFileHandler sshHandler)
+    public LogCollectionService(ISshFileHandler sshHandler, IArchiveManager archiveManager)
     {
         _sshHandler = sshHandler;
+        _archiveManager = archiveManager;
     }
 
     public async Task<CollectionResult> CollectLogsAsync(
@@ -34,12 +36,18 @@ public class LogCollectionService
             StartTime = DateTime.Now
         };
 
+        var archiveProgress = new Progress<ArchiveProgressInfo>(info =>
+        {
+            progress?.Report($"[Архив] {info.Message}");
+        });
+
         try
         {
             progress?.Report($"Начинаем сбор с сервера {server.Name} ({server.IpAddress})...");
 
             string serverTempDir = Path.Combine(tempDirectory, $"server_{server.Id}_{DateTime.Now:yyyyMMdd_HHmmss}");
             Directory.CreateDirectory(serverTempDir);
+            Directory.CreateDirectory(outputDirectory);
 
             progress?.Report($"Получение списка файлов с {server.Name}...");
             
@@ -54,20 +62,18 @@ public class LogCollectionService
 
             progress?.Report($"Найдено файлов: {allFiles.Count}");
 
-            // 🔥 Получаем все даты в диапазоне
             var dateRange = GetDateRange(startDate, endDate);
             progress?.Report($"Диапазон дат: {dateRange.Count} дн(я/ей)");
 
             var allFoundEntries = new List<string>();
+            var allLogFilesToProcess = new List<string>();
 
-            // 🔥 Для каждой даты ищем ВСЕ файлы
             foreach (var targetDate in dateRange)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
                 progress?.Report($"\nОбработка даты: {targetDate:dd.MM.yyyy}");
 
-                // Ищем ВСЕ файлы за эту дату
                 var targetFiles = LogSearcher.FindLogFilesByDate(allFiles, targetDate, groupName);
                 
                 if (targetFiles.Count == 0)
@@ -78,12 +84,10 @@ public class LogCollectionService
 
                 progress?.Report($"✓ Найдено файлов за {targetDate:dd.MM.yyyy}: {targetFiles.Count}");
 
-                // Для каждого файла
                 foreach (var targetFile in targetFiles)
                 {
                     progress?.Report($"\n  Обработка файла: {Path.GetFileName(targetFile)}");
 
-                    // Скачиваем файл
                     await _sshHandler.DownloadFileAsync(
                         server.IpAddress,
                         server.SshPort,
@@ -94,15 +98,46 @@ public class LogCollectionService
 
                     string downloadedFile = Path.Combine(serverTempDir, Path.GetFileName(targetFile));
 
-                    // 🔥 Определяем временной диапазон для этого файла
-                    DateTime fileStartTime = (targetDate == startDate.Date) ? startDate : targetDate;
-                    DateTime fileEndTime = (targetDate == endDate.Date) ? endDate : targetDate.Date.AddHours(23).AddMinutes(59).AddSeconds(59);
+                    string ext = Path.GetExtension(downloadedFile).ToLowerInvariant();
+                    string fileName = Path.GetFileName(downloadedFile).ToLowerInvariant();
+
+                    if (ext == ".zip" || fileName.EndsWith(".tar.gz") || fileName.EndsWith(".tgz"))
+                    {
+                        progress?.Report($"  Распаковка архива...");
+                        var extractedLogs = _archiveManager.ExtractArchives(
+                            downloadedFile, 
+                            serverTempDir, 
+                            archiveProgress);
+                        
+                        allLogFilesToProcess.AddRange(extractedLogs);
+                        
+                        if (File.Exists(downloadedFile))
+                        {
+                            File.Delete(downloadedFile);
+                        }
+                    }
+                    else if (ext == ".log")
+                    {
+                        allLogFilesToProcess.Add(downloadedFile);
+                    }
+                }
+            }
+
+            if (allLogFilesToProcess.Count > 0)
+            {
+                progress?.Report($"\nВсего найдено лог-файлов для обработки: {allLogFilesToProcess.Count}");
+
+                foreach (var logFile in allLogFilesToProcess)
+                {
+                    progress?.Report($"\n  Поиск в файле: {logFile}");  // ← Полный путь!
+
+                    DateTime fileStartTime = startDate;
+                    DateTime fileEndTime = endDate;
 
                     progress?.Report($"  Поиск записей с {fileStartTime:HH:mm} по {fileEndTime:HH:mm}...");
 
-                    // Ищем записи по времени
                     var foundLines = LogSearcher.SearchLogsByTimeRange(
-                        downloadedFile, 
+                        logFile, 
                         fileStartTime, 
                         fileEndTime, 
                         groupName);
@@ -111,25 +146,30 @@ public class LogCollectionService
                     {
                         progress?.Report($"  Найдено строк: {foundLines.Count}");
                         
-                        string[] allLines = File.ReadAllLines(downloadedFile);
-                        var fullEntries = LogSearcher.ExtractFullLogEntries(foundLines, allLines);
+                        string[] allLines = File.ReadAllLines(logFile);
+                        var fullEntries = LogSearcher.ExtractFullLogEntries(foundLines, allLines, groupName);
                         allFoundEntries.AddRange(fullEntries);
                         progress?.Report($"  Извлечено записей: {fullEntries.Count}");
                     }
                     else
                     {
-                        progress?.Report($"  Записи не найдены за {targetDate:dd.MM.yyyy} в этом файле");
-                    }
-
-                    // Удаляем скачанный файл перед следующим
-                    if (File.Exists(downloadedFile))
-                    {
-                        File.Delete(downloadedFile);
+                        progress?.Report($"  Записи не найдены в этом файле");
+                        
+                        // 🔥 ДОБАВЬ ЭТО ДЛЯ ОТЛАДКИ:
+                        try
+                        {
+                            var firstLines = File.ReadAllLines(logFile).Take(20).ToArray();
+                            progress?.Report($"  Первые строки файла:");
+                            foreach (var fl in firstLines)
+                            {
+                                progress?.Report($"    {fl}");
+                            }
+                        }
+                        catch { }
                     }
                 }
             }
 
-            // 🔥 Сохраняем результат
             if (allFoundEntries.Count > 0)
             {
                 string resultFileName = $"{server.Name}_{startDate:yyyyMMdd_HHmmss}_{endDate:yyyyMMdd_HHmmss}.log";
@@ -151,6 +191,7 @@ public class LogCollectionService
             if (Directory.Exists(serverTempDir))
             {
                 Directory.Delete(serverTempDir, true);
+                progress?.Report("Временные файлы удалены");
             }
 
             progress?.Report($"\nСбор с {server.Name} завершен");
@@ -204,6 +245,7 @@ public class LogCollectionService
     };
 }
 
+// 🔥 ВЫНЕСЕНЫ НА УРОВЕНЬ NAMESPACE
 public class CollectionResult
 {
     public long ServerId { get; set; }
