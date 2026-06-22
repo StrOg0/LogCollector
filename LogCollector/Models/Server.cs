@@ -1,13 +1,45 @@
-﻿namespace LogCollector.Models;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
-public class Server
+namespace LogCollectorApp.Models
 {
-    public int Id { get; set; }
-    public int GroupId { get; set; }
-    public string IpAddress { get; set; } = string.Empty;
-    public string HostName { get; set; } = string.Empty;
-    public string Login { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
-    public int Port { get; set; } = 22;
-    public bool IsActive { get; set; } = true;
+    [Table("servers", Schema = "log_collector")]
+    public class Server
+    {
+        [Key]
+        [Column("id")]
+        public long Id { get; set; }
+
+        [Required]
+        [Column("group_id")]
+        public long GroupId { get; set; }
+
+        [Required]
+        [Column("name")]
+        [MaxLength(150)]
+        public string Name { get; set; } = string.Empty;
+
+        [Required]
+        [Column("ip_address")]
+        [MaxLength(50)]
+        public string IpAddress { get; set; } = string.Empty;
+
+        [Column("ssh_port")]
+        public int SshPort { get; set; } = 22;
+
+        [Column("is_active")]
+        public bool IsActive { get; set; } = true;
+
+        [Column("created_at")]
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        [ForeignKey("GroupId")]
+        public ServerGroup? Group { get; set; }
+
+        /// <summary>
+        /// Флаг выбора сервера для сбора логов (не сохраняется в БД)
+        /// </summary>
+        [NotMapped]
+        public bool IsSelected { get; set; }
+    }
 }

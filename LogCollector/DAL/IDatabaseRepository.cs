@@ -1,9 +1,11 @@
-﻿using LogCollector.Models;
+﻿using LogCollectorApp.Models;
 
-namespace LogCollector.DAL;
-
-public interface IDatabaseRepository
+namespace LogCollectorApp.DAl
 {
-    List<ServerGroup> GetServerGroups();
-    List<Server> GetServersByGroup(int groupId);
+    public interface IDatabaseRepository
+    {
+        Task<List<ServerGroup>> GetAllGroupsAsync();
+        Task<List<Server>> GetServersByGroupAsync(long groupId);
+        Task<List<Server>> SearchByIpMaskAsync(string ipMask);
+    }
 }
