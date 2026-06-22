@@ -49,7 +49,6 @@ public class LogSearcher
         {
             string trimmedLine = line.TrimStart();
             
-            // 🔥 РАЗНАЯ ЛОГИКА ДЛЯ APP И WEB
             if (groupName.ToLower() == "app")
             {
                 // App: ищем DateTime=2026-06-08T12:30:42
@@ -75,7 +74,7 @@ public class LogSearcher
             }
             else // web
             {
-                // 🔥 Web: ищем 2026-06-09 08:37:48 в начале строки
+                // Web: ищем 2026-06-09 08:37:48 в начале строки
                 var match = Regex.Match(trimmedLine, @"^(\d{4}-\d{2}-\d{2}) (\d{2}):(\d{2}):\d{2}");
                 
                 if (match.Success)
@@ -106,13 +105,13 @@ public class LogSearcher
 
         if (groupName.ToLower() == "web")
         {
-            // 🔥 Для web: каждая строка - отдельная запись
-            Console.WriteLine($"WEB: каждая строка - отдельная запись");
+            // 🔥 WEB: просто возвращаем найденные строки (упрощённо, без зависаний)
+            Console.WriteLine($"WEB: возвращаем найденные строки");
             return foundLines;
         }
         else
         {
-            // Для app: извлекаем полные записи
+            // 🔥 APP: извлекаем полные записи (рабочая версия)
             Console.WriteLine($"APP: извлекаем полные записи");
             
             var fullEntries = new List<string>();
