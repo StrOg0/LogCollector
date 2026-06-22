@@ -19,6 +19,7 @@ public class LogCollectionService
 
     public async Task<CollectionResult> CollectLogsAsync(
         Server server,
+        LogSource logSource,
         DateTime startDate,
         DateTime endDate,
         string tempDirectory,
@@ -80,7 +81,7 @@ public class LogCollectionService
             var downloadedFiles = Directory.GetFiles(serverTempDir);
             if (downloadedFiles.Length > 0)
             {
-                //Unpack archives
+                // Распаковка архивов
                 progress?.Report("Анализ скачанных файлов и распаковка архивов...");
                 var allLogFilesToProcess = new List<string>();
 
@@ -110,11 +111,6 @@ public class LogCollectionService
                 progress?.Report($"Найдено {allLogFilesToProcess.Count} лог-файлов. Начинаем потоковую фильтрацию...");
                 string filteredTempFile = Path.Combine(serverTempDir, $"filtered_{server.IpAddress}.log");
 
-                // Определяем формат логов (в будущем будет браться из БД на основе группы серверов)
-                //LogFormatType logFormat = DetermineLogFormat(server);
-                LogFormatType logFormat = LogFormatType.Web;
-                progress?.Report($"Определен формат логов: {logFormat}");
-
                 long totalLinesFound = 0;
                 bool isFirstFile = true;
 
@@ -123,15 +119,14 @@ public class LogCollectionService
                     cancellationToken.ThrowIfCancellationRequested();
                     progress?.Report($"Фильтрация: {Path.GetFileName(logFile)}...");
 
-                    // Вызываем модуль поиска. 
+                    // Вызов модуля поиска
                     // isFirstFile: первый файл перезаписывает (append=false), остальные дописывают (append=true)
                     long linesInFile = await _logSearchModule.SearchLogsAsync(
                         inputFilePath: logFile,
                         outputFilePath: filteredTempFile,
                         startTime: startDate,
                         endTime: endDate,
-                        searchMask: null, // Маску пока не передаем (будет из БД)
-                        logFormat: logFormat,
+                        logSource: logSource,
                         append: !isFirstFile
                     );
 
@@ -148,7 +143,7 @@ public class LogCollectionService
                     return result;
                 }
 
-                //Create result archive
+                // Создание итогового архива
                 string resultZipPath = Path.Combine(outputDirectory, $"{server.IpAddress}_{DateTime.Now:yyyyMMdd_HHmmss}.zip");
 
                 var processedLogs = new List<ProcessedLogInfo>
@@ -207,19 +202,6 @@ public class LogCollectionService
         }
 
         return result;
-    }
-
-    // [ИНТЕГРАЦИЯ] Вспомогательный метод определения формата логов
-    // В будущем тип формата будет храниться в БД в таблице групп серверов
-    private LogFormatType DetermineLogFormat(Server server)
-    {
-        // Пока определяем по имени сервера (хардкод)
-        if (server.Name.Contains("web", StringComparison.OrdinalIgnoreCase) ||
-            server.Name.Contains("ddm", StringComparison.OrdinalIgnoreCase))
-        {
-            return LogFormatType.Web;
-        }
-        return LogFormatType.App;
     }
 
     public class CollectionResult

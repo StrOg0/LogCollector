@@ -5,6 +5,14 @@ namespace LogCollectorApp.DAl
 {
     public class DatabaseRepository : IDatabaseRepository
     {
+        public async Task<LogSource> GetLogSourceByGroupIdAsync(int groupId)
+        {
+            using var context = new AppDbContext();
+
+            return await context.LogSources
+                .AsNoTracking()
+                .FirstOrDefaultAsync(ls => ls.GroupId == groupId);
+        }
 
         public async Task<List<ServerGroup>> GetAllGroupsAsync()
         {

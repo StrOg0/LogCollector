@@ -60,7 +60,6 @@
             listBoxLog.Name = "listBoxLog";
             listBoxLog.Size = new Size(452, 104);
             listBoxLog.TabIndex = 1;
-            listBoxLog.SelectedIndexChanged += listBoxLog_SelectedIndexChanged;
             // 
             // lblStatus
             // 
@@ -70,7 +69,6 @@
             lblStatus.Size = new Size(66, 20);
             lblStatus.TabIndex = 2;
             lblStatus.Text = "lblStatus";
-            lblStatus.Click += lblStatus_Click;
             // 
             // cmbGroup
             // 
@@ -116,7 +114,6 @@
             endDateLbl.Size = new Size(109, 20);
             endDateLbl.TabIndex = 7;
             endDateLbl.Text = "Конец поиска:";
-            endDateLbl.Click += label1_Click;
             // 
             // txtDateTimeEnd
             // 

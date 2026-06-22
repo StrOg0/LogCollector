@@ -241,8 +241,15 @@ namespace LogCollector.UI
                         string tempDir = Path.Combine(Path.GetTempPath(), $"log_collector_{server.Id}_{DateTime.Now:yyyyMMdd_HHmmss}");
                         Directory.CreateDirectory(tempDir);
 
+                        var logSource = await _databaseRepository.GetLogSourceByGroupIdAsync((int)server.GroupId);
+
+                        if (logSource == null)
+                            throw new InvalidOperationException($"LogSource для группы {server.GroupId} не найден");
+
+
                         var result = await _logService.CollectLogsAsync(
                             server: server,
+                            logSource: logSource,
                             startDate: startDate,
                             endDate: endDate,
                             tempDirectory: tempDir,
@@ -329,26 +336,6 @@ namespace LogCollector.UI
                 btnStartCollection.Enabled = true;
                 _cts?.Dispose();
             }
-        }
-
-        private void listBoxLog_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void lblStatus_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void toolTip1_Popup(object sender, PopupEventArgs e)
-        {
-
-        }
-
-        private void label1_Click(object sender, EventArgs e)
-        {
-
         }
     }
 }
