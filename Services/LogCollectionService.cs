@@ -111,12 +111,12 @@ public class LogCollectionService
                         
                         allLogFilesToProcess.AddRange(extractedLogs);
                         
-                        if (File.Exists(downloadedFile))
+                        if (File.Exists(downloadedFile)) 
                         {
                             File.Delete(downloadedFile);
                         }
                     }
-                    else if (ext == ".log")
+                    else if (ext == ".log" || ext == ".txt")  // 🔥 ДОБАВЛЕНО: поддержка .txt
                     {
                         allLogFilesToProcess.Add(downloadedFile);
                     }
