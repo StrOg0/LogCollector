@@ -1,5 +1,6 @@
 ﻿using LogCollector.Interfaces;
 using LogCollector.Models;
+using LogCollectorApp.Models;
 
 namespace LogCollector.BLL;
 
@@ -28,7 +29,7 @@ public class LogCollectionService
         var result = new CollectionResult
         {
             ServerId = server.Id,
-            ServerName = server.HostName,
+            ServerName = server.Name,
             StartTime = DateTime.Now
         };
 
@@ -43,17 +44,17 @@ public class LogCollectionService
 
         try
         {
-            progress?.Report($"Начинаем сбор с сервера {server.HostName} ({server.IpAddress})...");
+            progress?.Report($"Начинаем сбор с сервера {server.Name} ({server.IpAddress})...");
 
             Directory.CreateDirectory(serverTempDir);
             Directory.CreateDirectory(outputDirectory);
 
-            progress?.Report($"Получение списка файлов с {server.HostName}...");
+            progress?.Report($"Получение списка файлов с {server.Name}...");
             var files = await _sshHandler.GetFilesListAsync(
                 server.IpAddress,
-                server.Port,
-                server.Login,
-                server.Password,
+                server.SshPort,
+                "testuser",
+                "testpassword",
                 "/upload", // Путь к логам (пока хардкод)
                 cancellationToken);
 
@@ -67,9 +68,9 @@ public class LogCollectionService
 
                 await _sshHandler.DownloadFileAsync(
                     server.IpAddress,
-                    server.Port,
-                    server.Login,
-                    server.Password,
+                    server.SshPort,
+                    "testuser",
+                    "testpassword",
                     remoteFile,
                     serverTempDir,
                     progress,
@@ -155,7 +156,7 @@ public class LogCollectionService
                 new ProcessedLogInfo
                 {
                     ServerIp = server.IpAddress,
-                    ServerName = server.HostName,
+                    ServerName = server.Name,
                     TempFilePath = filteredTempFile,
                     LogDate = startDate
                 }
@@ -168,7 +169,7 @@ public class LogCollectionService
                 result.Status = CollectionStatus.Success;
                 result.Message = $"Успешно собрано и упаковано {allLogFilesToProcess.Count} файл(ов)";
 
-                progress?.Report($"Сбор с {server.HostName} завершен. Архив: {Path.GetFileName(resultZipPath)}");
+                progress?.Report($"Сбор с {server.Name} завершен. Архив: {Path.GetFileName(resultZipPath)}");
             }
             else
             {
@@ -176,7 +177,7 @@ public class LogCollectionService
                 result.Message = "Данные не найдены";
             }
 
-            progress?.Report($"Сбор с {server.HostName} завершен");
+            progress?.Report($"Сбор с {server.Name} завершен");
         }
         catch (OperationCanceledException)
         {
@@ -213,8 +214,8 @@ public class LogCollectionService
     private LogFormatType DetermineLogFormat(Server server)
     {
         // Пока определяем по имени сервера (хардкод)
-        if (server.HostName.Contains("web", StringComparison.OrdinalIgnoreCase) ||
-            server.HostName.Contains("ddm", StringComparison.OrdinalIgnoreCase))
+        if (server.Name.Contains("web", StringComparison.OrdinalIgnoreCase) ||
+            server.Name.Contains("ddm", StringComparison.OrdinalIgnoreCase))
         {
             return LogFormatType.Web;
         }
@@ -223,7 +224,7 @@ public class LogCollectionService
 
     public class CollectionResult
     {
-        public int ServerId { get; set; }
+        public long ServerId { get; set; }
         public string ServerName { get; set; } = string.Empty;
         public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }

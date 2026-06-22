@@ -58,11 +58,11 @@ namespace LogCollectorApp.DAl
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.HasDefaultSchema("pm02");
+            modelBuilder.HasDefaultSchema("log_collector");
 
-            modelBuilder.Entity<ServerGroup>().ToTable("server_groups", schema: "pm02");
-            modelBuilder.Entity<Server>().ToTable("servers", schema: "pm02");
-            modelBuilder.Entity<LogSource>().ToTable("log_sources", schema: "pm02");
+            modelBuilder.Entity<ServerGroup>().ToTable("server_groups", schema: "log_collector");
+            modelBuilder.Entity<Server>().ToTable("servers", schema: "log_collector");
+            modelBuilder.Entity<LogSource>().ToTable("log_sources", schema: "log_collector");
 
             modelBuilder.Entity<ServerGroup>()
                 .HasMany(sg => sg.Servers)
@@ -76,11 +76,18 @@ namespace LogCollectorApp.DAl
                 .HasForeignKey<LogSource>(ls => ls.GroupId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // 🔥 УБРАН конвертер для IP-адреса - теперь это просто string
-
             modelBuilder.Entity<Server>()
                 .Property(s => s.SshPort)
                 .HasDefaultValue(22);
+
+            // Преобразование ip-адреса в строку
+            modelBuilder.Entity<Server>()
+                .Property(s => s.IpAddress)
+                .HasConversion(
+                    v => System.Net.IPAddress.Parse(v), // Как сохранить string из C# в inet в БД
+                    v => v.ToString()                   // Как прочитать inet из БД в string в C#
+                )
+                .HasColumnType("inet");
 
             modelBuilder.Entity<ServerGroup>()
                 .Property(sg => sg.IsActive)
