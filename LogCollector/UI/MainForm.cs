@@ -24,7 +24,8 @@ namespace LogCollector.UI
             InitializeComponent();
 
             var sshHandler = new SshFileHandler();
-            _logService = new LogCollectionService(sshHandler);
+            var archiveManager = new ArchiveManager();
+            _logService = new LogCollectionService(sshHandler, archiveManager);
         }
 
         private async void btnStartCollection_Click(object sender, EventArgs e)
