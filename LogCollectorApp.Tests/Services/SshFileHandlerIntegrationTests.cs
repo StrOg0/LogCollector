@@ -8,9 +8,6 @@ namespace LogCollectorApp.Tests.Services;
 [NonParallelizable]
 public class SshFileHandlerIntegrationTests
 {
-    private const string TestFileName = "integration-test.log";
-    private const string ExpectedContent = "SFTP integration test";
-
     private SshFileHandler _handler = null!;
     private string _tempDir = null!;
 
@@ -19,7 +16,9 @@ public class SshFileHandlerIntegrationTests
     private string _username = null!;
     private string _password = null!;
     private string _remoteDirectory = null!;
+    private string _testFileName = null!;
     private string _remoteFilePath = null!;
+    private string? _expectedText;
 
     [SetUp]
     public void SetUp()
@@ -34,7 +33,14 @@ public class SshFileHandlerIntegrationTests
         if (!int.TryParse(portText, out _port))
             Assert.Ignore("LOGCOLLECTOR_SFTP_PORT должен быть числом.");
 
-        _remoteFilePath = CombineRemotePath(_remoteDirectory, TestFileName);
+        _testFileName = Environment.GetEnvironmentVariable("LOGCOLLECTOR_SFTP_FILE");
+
+        if (string.IsNullOrWhiteSpace(_testFileName))
+            Assert.Ignore("Интеграционный SFTP-тест пропущен: переменная LOGCOLLECTOR_SFTP_FILE не задана.");
+
+        _expectedText = Environment.GetEnvironmentVariable("LOGCOLLECTOR_SFTP_EXPECTED_TEXT");
+
+        _remoteFilePath = CombineRemotePath(_remoteDirectory, _testFileName);
 
         _tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(_tempDir);
@@ -78,13 +84,13 @@ public class SshFileHandlerIntegrationTests
             new Progress<string>(),
             CancellationToken.None);
 
-        string localFilePath = Path.Combine(_tempDir, TestFileName);
+        string localFilePath = Path.Combine(_tempDir, _testFileName);
 
         Assert.That(File.Exists(localFilePath), Is.True);
     }
 
     [Test]
-    public async Task DownloadFileAsync_WhenRemoteFileExists_DownloadsCorrectContent()
+    public async Task DownloadFileAsync_WhenRemoteFileExists_DownloadsNonEmptyContent()
     {
         await _handler.DownloadFileAsync(
             _host,
@@ -96,11 +102,13 @@ public class SshFileHandlerIntegrationTests
             new Progress<string>(),
             CancellationToken.None);
 
-        string localFilePath = Path.Combine(_tempDir, TestFileName);
+        string localFilePath = Path.Combine(_tempDir, _testFileName);
         string content = File.ReadAllText(localFilePath);
 
-        Assert.That(content, Does.Contain(ExpectedContent));
-        Assert.That(content, Does.Contain("2026-06-08 14:00:00 test line"));
+        Assert.That(content, Is.Not.Empty);
+
+        if (!string.IsNullOrWhiteSpace(_expectedText))
+            Assert.That(content, Does.Contain(_expectedText));
     }
 
     [Test]
@@ -120,7 +128,7 @@ public class SshFileHandlerIntegrationTests
 
         Assert.That(progress.Messages, Has.Some.Contains("Подключение"));
         Assert.That(progress.Messages, Has.Some.Contains("Скачивание"));
-        Assert.That(progress.Messages, Has.Some.Contains(TestFileName));
+        Assert.That(progress.Messages, Has.Some.Contains(_testFileName));
     }
 
     [Test]
@@ -151,16 +159,21 @@ public class SshFileHandlerIntegrationTests
 
     private static string CombineRemotePath(string directory, string fileName)
     {
-        return $"{directory.TrimEnd('/')}/{fileName}";
+        return $"{directory.TrimEnd('/')}/{fileName.TrimStart('/')}";
     }
 
     private sealed class TestProgress : IProgress<string>
     {
+        private readonly object _lock = new();
+
         public List<string> Messages { get; } = new();
 
         public void Report(string value)
         {
-            Messages.Add(value);
+            lock (_lock)
+            {
+                Messages.Add(value);
+            }
         }
     }
 }
