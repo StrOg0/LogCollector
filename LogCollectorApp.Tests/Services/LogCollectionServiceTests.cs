@@ -1,13 +1,13 @@
 ﻿using LogCollectorApp.Models;
 using LogCollectorApp.Services;
 using LogCollectorApp.Tests.Fakes;
-using NUnit.Framework;
 
 namespace LogCollectorApp.Tests.Services;
 
 [TestFixture]
 public class LogCollectionServiceTests
 {
+    private string _testRoot = null!;
     private string _tempRoot = null!;
     private string _outputDir = null!;
     private FakeSshFileHandler _fakeSsh = null!;
@@ -16,10 +16,9 @@ public class LogCollectionServiceTests
     [SetUp]
     public void SetUp()
     {
-        string testRoot = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-
-        _tempRoot = Path.Combine(testRoot, "temp");
-        _outputDir = Path.Combine(testRoot, "output");
+        _testRoot = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        _tempRoot = Path.Combine(_testRoot, "temp");
+        _outputDir = Path.Combine(_testRoot, "output");
 
         Directory.CreateDirectory(_tempRoot);
         Directory.CreateDirectory(_outputDir);
@@ -33,10 +32,8 @@ public class LogCollectionServiceTests
     {
         _fakeSsh?.Dispose();
 
-        string? root = Directory.GetParent(_outputDir)?.FullName;
-
-        if (root is not null && Directory.Exists(root))
-            Directory.Delete(root, recursive: true);
+        if (Directory.Exists(_testRoot))
+            Directory.Delete(_testRoot, recursive: true);
     }
 
     [Test]
@@ -104,5 +101,29 @@ public class LogCollectionServiceTests
                 Name = "app"
             }
         };
+    }
+
+    [Test]
+    public async Task CollectLogsAsync_WhenAppServerHasNoFiles_ReturnsNoData()
+    {
+        const string remoteDirectory = "/var/log/digdes/sdu";
+
+        _fakeSsh.DirectoryFiles[remoteDirectory] = new List<string>();
+
+        Server server = CreateAppServer();
+
+        CollectionResult result = await _service.CollectLogsAsync(
+            server,
+            new DateTime(2026, 6, 8, 14, 0, 0),
+            new DateTime(2026, 6, 8, 14, 5, 0),
+            _tempRoot,
+            _outputDir,
+            progress: null!,
+            CancellationToken.None);
+
+        Assert.That(result.Status, Is.EqualTo(CollectionStatus.NoData));
+        Assert.That(result.Message, Is.EqualTo("Записи не найдены"));
+        Assert.That(result.ResultFilePath, Is.Empty);
+        Assert.That(_fakeSsh.DownloadedFiles, Is.Empty);
     }
 }
