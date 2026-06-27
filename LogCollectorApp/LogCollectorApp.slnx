@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="../LogCollectorApp.Tests/LogCollectorApp.Tests.csproj" Id="35abe7ea-119b-480a-8618-702a3b30d66d" />
+  <Project Path="LogCollectorApp.csproj" />
+</Solution>

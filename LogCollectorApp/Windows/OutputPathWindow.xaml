@@ -1,0 +1,30 @@
+<Window x:Class="LogCollectorApp.Windows.OutputPathWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Выбор папки для сохранения" Height="200" Width="500"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Папка для сохранения логов:" Margin="0,0,0,5"/>
+        
+        <Grid Grid.Row="1" Margin="0,0,0,15">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBox x:Name="txtPath" Grid.Column="0" Padding="5" Margin="0,0,10,0"/>
+            <Button Content="Обзор..." Grid.Column="1" Width="80" Click="BtnBrowse_Click"/>
+        </Grid>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+            <Button Content="Сохранить" Width="100" Margin="0,0,10,0" Click="BtnSave_Click"/>
+            <Button Content="Отмена" Width="100" Click="BtnCancel_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>
