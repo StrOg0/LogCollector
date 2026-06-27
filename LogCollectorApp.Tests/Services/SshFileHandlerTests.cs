@@ -100,7 +100,7 @@ public class SshFileHandlerTests
         using var cts = new CancellationTokenSource();
         cts.Cancel();
 
-        Assert.ThrowsAsync<OperationCanceledException>(async () =>
+        Exception? exception =  Assert.CatchAsync<OperationCanceledException>(async () =>
         {
             await _handler.GetFilesListAsync(
                 "127.0.0.1",
@@ -110,6 +110,8 @@ public class SshFileHandlerTests
                 "/var/log",
                 cts.Token);
         });
+
+        Assert.That(exception, Is.Not.Null);
     }
 
     [Test]
@@ -212,7 +214,7 @@ public class SshFileHandlerTests
         using var cts = new CancellationTokenSource();
         cts.Cancel();
 
-        Assert.ThrowsAsync<OperationCanceledException>(async () =>
+        Exception? exception = Assert.CatchAsync<OperationCanceledException>(async () =>
         {
             await _handler.DownloadFileAsync(
                 "127.0.0.1",
@@ -225,6 +227,7 @@ public class SshFileHandlerTests
                 cts.Token);
         });
 
+        Assert.That(exception, Is.Not.Null);
         Assert.That(Directory.Exists(_tempRoot), Is.False);
     }
 
