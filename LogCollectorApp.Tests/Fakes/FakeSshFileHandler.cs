@@ -6,6 +6,7 @@ internal sealed class FakeSshFileHandler : ISshFileHandler
 {
     public Dictionary<string, List<string>> DirectoryFiles { get; } = new();
     public Dictionary<string, string> RemoteTextFiles { get; } = new();
+    public Dictionary<string, byte[]> RemoteBinaryFiles { get; } = new();
 
     public HashSet<string> DirectoriesThatThrow { get; } = new();
     public HashSet<string> FilesThatThrowOnDownload { get; } = new();
@@ -55,16 +56,24 @@ internal sealed class FakeSshFileHandler : ISshFileHandler
         if (FilesThatThrowOnDownload.Contains(remoteFilePath))
             throw new InvalidOperationException($"Файл недоступен: {remoteFilePath}");
 
-        if (!RemoteTextFiles.TryGetValue(remoteFilePath, out string? content))
-            throw new FileNotFoundException($"Файл не найден в fake SSH: {remoteFilePath}");
-
         Directory.CreateDirectory(localTempDirectory);
 
         string localPath = Path.Combine(
             localTempDirectory,
             Path.GetFileName(remoteFilePath));
 
-        File.WriteAllText(localPath, content);
+        if (RemoteBinaryFiles.TryGetValue(remoteFilePath, out byte[]? bytes))
+        {
+            File.WriteAllBytes(localPath, bytes);
+        }
+        else if (RemoteTextFiles.TryGetValue(remoteFilePath, out string? content))
+        {
+            File.WriteAllText(localPath, content);
+        }
+        else
+        {
+            throw new FileNotFoundException($"Файл не найден в fake SSH: {remoteFilePath}");
+        }
 
         progress?.Report($"Fake download: {Path.GetFileName(remoteFilePath)}");
 
