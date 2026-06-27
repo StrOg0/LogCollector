@@ -126,4 +126,113 @@ public class LogCollectionServiceTests
         Assert.That(result.ResultFilePath, Is.Empty);
         Assert.That(_fakeSsh.DownloadedFiles, Is.Empty);
     }
+
+    [Test]
+    public async Task CollectLogsAsync_WhenAppDirectoryIsUnavailable_ReturnsError()
+    {
+        const string remoteDirectory = "/var/log/digdes/sdu";
+
+        _fakeSsh.DirectoriesThatThrow.Add(remoteDirectory);
+
+        Server server = CreateAppServer();
+
+        CollectionResult result = await _service.CollectLogsAsync(
+            server,
+            new DateTime(2026, 6, 8, 14, 0, 0),
+            new DateTime(2026, 6, 8, 14, 5, 0),
+            _tempRoot,
+            _outputDir,
+            progress: null!,
+            CancellationToken.None);
+
+        Assert.That(result.Status, Is.EqualTo(CollectionStatus.Error));
+        Assert.That(result.Message, Does.Contain("Каталог недоступен"));
+        Assert.That(result.ResultFilePath, Is.Empty);
+    }
+
+    [Test]
+    public async Task CollectLogsAsync_WhenDownloadFails_ReturnsError()
+    {
+        const string remoteDirectory = "/var/log/digdes/sdu";
+        const string remoteFile = "/var/log/digdes/sdu/log 2026Y06M08D 14H00M00S.log";
+
+        _fakeSsh.DirectoryFiles[remoteDirectory] = new List<string>
+    {
+        remoteFile
+    };
+
+        _fakeSsh.FilesThatThrowOnDownload.Add(remoteFile);
+
+        Server server = CreateAppServer();
+
+        CollectionResult result = await _service.CollectLogsAsync(
+            server,
+            new DateTime(2026, 6, 8, 14, 0, 0),
+            new DateTime(2026, 6, 8, 14, 5, 0),
+            _tempRoot,
+            _outputDir,
+            progress: null!,
+            CancellationToken.None);
+
+        Assert.That(result.Status, Is.EqualTo(CollectionStatus.Error));
+        Assert.That(result.Message, Does.Contain("Файл недоступен"));
+        Assert.That(_fakeSsh.DownloadedFiles, Does.Contain(remoteFile));
+    }
+
+    [Test]
+    public async Task CollectLogsAsync_WhenCancellationRequested_ReturnsCancelled()
+    {
+        Server server = CreateAppServer();
+
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        CollectionResult result = await _service.CollectLogsAsync(
+            server,
+            new DateTime(2026, 6, 8, 14, 0, 0),
+            new DateTime(2026, 6, 8, 14, 5, 0),
+            _tempRoot,
+            _outputDir,
+            progress: null!,
+            cts.Token);
+
+        Assert.That(result.Status, Is.EqualTo(CollectionStatus.Cancelled));
+        Assert.That(result.Message, Is.EqualTo("Отменено"));
+    }
+
+    [Test]
+    public async Task CollectLogsAsync_WhenOperationFinished_DeletesTempDirectory()
+    {
+        const string remoteDirectory = "/var/log/digdes/sdu";
+        const string remoteFile = "/var/log/digdes/sdu/log 2026Y06M08D 14H00M00S.log";
+
+        _fakeSsh.DirectoryFiles[remoteDirectory] = new List<string>
+    {
+        remoteFile
+    };
+
+        _fakeSsh.RemoteTextFiles[remoteFile] =
+            """
+        StorageServerRuntime first entry
+        DateTime=2026-06-08T14:00:00 target line
+        Action=OpenDocument
+        """;
+
+        Server server = CreateAppServer();
+
+        CollectionResult result = await _service.CollectLogsAsync(
+            server,
+            new DateTime(2026, 6, 8, 14, 0, 0),
+            new DateTime(2026, 6, 8, 14, 5, 0),
+            _tempRoot,
+            _outputDir,
+            progress: null!,
+            CancellationToken.None);
+
+        Assert.That(result.Status, Is.EqualTo(CollectionStatus.Success));
+        Assert.That(Directory.Exists(_tempRoot), Is.False);
+        Assert.That(File.Exists(result.ResultFilePath), Is.True);
+    }
+
+
 }
