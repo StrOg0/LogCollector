@@ -1,6 +1,7 @@
 ﻿using LogCollectorApp.Models;
 using LogCollectorApp.Services;
 using LogCollectorApp.Tests.Fakes;
+using System.IO.Compression;
 
 namespace LogCollectorApp.Tests.Services;
 
@@ -82,25 +83,6 @@ public class LogCollectionServiceTests
 
         Assert.That(_fakeSsh.RequestedDirectories, Does.Contain(remoteDirectory));
         Assert.That(_fakeSsh.DownloadedFiles, Does.Contain(remoteFile));
-    }
-
-    private static Server CreateAppServer()
-    {
-        return new Server
-        {
-            Id = 1,
-            GroupId = 1,
-            Name = "app-1",
-            IpAddress = "10.10.130.6",
-            SshPort = 22,
-            SshUsername = "test_user",
-            SshPassword = "test_password",
-            Group = new ServerGroup
-            {
-                Id = 1,
-                Name = "app"
-            }
-        };
     }
 
     [Test]
@@ -234,5 +216,199 @@ public class LogCollectionServiceTests
         Assert.That(File.Exists(result.ResultFilePath), Is.True);
     }
 
+    [Test]
+    public async Task CollectLogsAsync_WhenWebMainLogHasMatchingLines_ReturnsSuccess()
+    {
+        const string mainDirectory = "/digdes/TK/dock/ddmwebapi_log";
+        const string archiveDirectory = "/digdes/TK/dock/ddmwebapi_log/archive";
+        const string remoteMainLog = "/digdes/TK/dock/ddmwebapi_log/DDM_Web.log";
 
+        _fakeSsh.DirectoryFiles[mainDirectory] = new List<string>
+    {
+        remoteMainLog
+    };
+
+        _fakeSsh.DirectoryFiles[archiveDirectory] = new List<string>();
+
+        _fakeSsh.RemoteTextFiles[remoteMainLog] =
+            """
+        2026-06-08 13:59:59 before
+        2026-06-08 14:00:00 target line
+         web continuation line
+        2026-06-08 14:06:00 after
+        """;
+
+        Server server = CreateWebServer();
+
+        CollectionResult result = await _service.CollectLogsAsync(
+            server,
+            new DateTime(2026, 6, 8, 14, 0, 0),
+            new DateTime(2026, 6, 8, 14, 5, 0),
+            _tempRoot,
+            _outputDir,
+            progress: null!,
+            CancellationToken.None);
+
+        Assert.That(result.Status, Is.EqualTo(CollectionStatus.Success));
+        Assert.That(File.Exists(result.ResultFilePath), Is.True);
+
+        string content = File.ReadAllText(result.ResultFilePath);
+
+        Assert.That(content, Does.Contain("target line"));
+        Assert.That(content, Does.Contain("web continuation line"));
+        Assert.That(content, Does.Not.Contain("before"));
+        Assert.That(content, Does.Not.Contain("after"));
+
+        Assert.That(_fakeSsh.RequestedDirectories, Does.Contain(mainDirectory));
+        Assert.That(_fakeSsh.RequestedDirectories, Does.Contain(archiveDirectory));
+        Assert.That(_fakeSsh.DownloadedFiles, Does.Contain(remoteMainLog));
+    }
+
+    [Test]
+    public async Task CollectLogsAsync_WhenWebArchiveHasMatchingLog_ReturnsSuccess()
+    {
+        const string mainDirectory = "/digdes/TK/dock/ddmwebapi_log";
+        const string archiveDirectory = "/digdes/TK/dock/ddmwebapi_log/archive";
+        const string remoteArchive = "/digdes/TK/dock/ddmwebapi_log/archive/DDM_Web_plain_20260608_140000.zip";
+
+        _fakeSsh.DirectoryFiles[mainDirectory] = new List<string>();
+
+        _fakeSsh.DirectoryFiles[archiveDirectory] = new List<string>
+    {
+        remoteArchive
+    };
+
+        _fakeSsh.RemoteBinaryFiles[remoteArchive] = CreateZipBytes(
+            "DDM_Web.log",
+            """
+        2026-06-08 13:59:59 before
+        2026-06-08 14:01:00 target from archive
+         archive continuation line
+        2026-06-08 14:06:00 after
+        """);
+
+        Server server = CreateWebServer();
+
+        CollectionResult result = await _service.CollectLogsAsync(
+            server,
+            new DateTime(2026, 6, 8, 14, 0, 0),
+            new DateTime(2026, 6, 8, 14, 5, 0),
+            _tempRoot,
+            _outputDir,
+            progress: null!,
+            CancellationToken.None);
+
+        Assert.That(result.Status, Is.EqualTo(CollectionStatus.Success));
+        Assert.That(File.Exists(result.ResultFilePath), Is.True);
+
+        string content = File.ReadAllText(result.ResultFilePath);
+
+        Assert.That(content, Does.Contain("target from archive"));
+        Assert.That(content, Does.Contain("archive continuation line"));
+        Assert.That(content, Does.Not.Contain("before"));
+        Assert.That(content, Does.Not.Contain("after"));
+
+        Assert.That(_fakeSsh.DownloadedFiles, Does.Contain(remoteArchive));
+    }
+
+    [Test]
+    public async Task CollectLogsAsync_WhenProgressProvided_ReportsProgressMessages()
+    {
+        const string remoteDirectory = "/var/log/digdes/sdu";
+        const string remoteFile = "/var/log/digdes/sdu/log 2026Y06M08D 14H00M00S.log";
+
+        _fakeSsh.DirectoryFiles[remoteDirectory] = new List<string>
+    {
+        remoteFile
+    };
+
+        _fakeSsh.RemoteTextFiles[remoteFile] =
+            """
+        StorageServerRuntime first entry
+        DateTime=2026-06-08T14:00:00 target line
+        Action=OpenDocument
+        """;
+
+        var progress = new TestProgress();
+        Server server = CreateAppServer();
+
+        CollectionResult result = await _service.CollectLogsAsync(
+            server,
+            new DateTime(2026, 6, 8, 14, 0, 0),
+            new DateTime(2026, 6, 8, 14, 5, 0),
+            _tempRoot,
+            _outputDir,
+            progress,
+            CancellationToken.None);
+
+        Assert.That(result.Status, Is.EqualTo(CollectionStatus.Success));
+        Assert.That(progress.Messages, Has.Some.Contains("Скачивание"));
+        Assert.That(progress.Messages, Has.Some.Contains("Fake download"));
+        Assert.That(progress.Messages, Has.Some.Contains("✓"));
+    }
+
+    private static Server CreateAppServer()
+    {
+        return new Server
+        {
+            Id = 1,
+            GroupId = 1,
+            Name = "app-1",
+            IpAddress = "10.10.130.6",
+            SshPort = 22,
+            SshUsername = "test_user",
+            SshPassword = "test_password",
+            Group = new ServerGroup
+            {
+                Id = 1,
+                Name = "app"
+            }
+        };
+    }
+
+    private static Server CreateWebServer()
+    {
+        return new Server
+        {
+            Id = 2,
+            GroupId = 2,
+            Name = "web-1",
+            IpAddress = "10.10.130.7",
+            SshPort = 22,
+            SshUsername = "test_user",
+            SshPassword = "test_password",
+            Group = new ServerGroup
+            {
+                Id = 2,
+                Name = "web"
+            }
+        };
+    }
+
+    private static byte[] CreateZipBytes(string entryName, string content)
+    {
+        using var memoryStream = new MemoryStream();
+
+        using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Create, leaveOpen: true))
+        {
+            ZipArchiveEntry entry = archive.CreateEntry(entryName);
+
+            using Stream entryStream = entry.Open();
+            using var writer = new StreamWriter(entryStream);
+
+            writer.Write(content);
+        }
+
+        return memoryStream.ToArray();
+    }
+
+    private sealed class TestProgress : IProgress<string>
+    {
+        public List<string> Messages { get; } = new();
+
+        public void Report(string value)
+        {
+            Messages.Add(value);
+        }
+    }
 }
