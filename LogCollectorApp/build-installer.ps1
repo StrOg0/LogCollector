@@ -68,6 +68,7 @@ $IsccCandidates = @(
     "$env:ProgramFiles\Inno Setup 6\ISCC.exe",
     "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe"
 )
+$iscc = $possibleIscc | Where-Object { Test-Path $_ } | Select-Object -First 1
 
 $IsccPath = $null
 
