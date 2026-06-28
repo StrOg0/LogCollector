@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <RunConfiguration>
+    <ResultsDirectory>.\TestResults</ResultsDirectory>
+
+    <EnvironmentVariables>
+      <LOGCOLLECTOR_SFTP_HOST>127.0.0.1</LOGCOLLECTOR_SFTP_HOST>
+      <LOGCOLLECTOR_SFTP_PORT>2222</LOGCOLLECTOR_SFTP_PORT>
+      <LOGCOLLECTOR_SFTP_USER>testuser</LOGCOLLECTOR_SFTP_USER>
+      <LOGCOLLECTOR_SFTP_PASSWORD>testpassword</LOGCOLLECTOR_SFTP_PASSWORD>
+      <LOGCOLLECTOR_SFTP_DIR>/upload</LOGCOLLECTOR_SFTP_DIR>
+      <LOGCOLLECTOR_SFTP_FILE>app_log_1.log</LOGCOLLECTOR_SFTP_FILE>
+
+		<LOGCOLLECTOR_TEST_DB_CONNECTION>
+			Host=localhost;Port=5433;Database=logcollector_tests;Username=postgres;Password=testpass;SearchPath=pm02
+		</LOGCOLLECTOR_TEST_DB_CONNECTION>
+    </EnvironmentVariables>
+  </RunConfiguration>
+</RunSettings>
