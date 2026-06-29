@@ -1,5 +1,9 @@
 #define MyAppName "LogCollectorApp"
+
+#ifndef MyAppVersion
 #define MyAppVersion "1.0.0"
+#endif
+
 #define MyAppPublisher "PM02"
 #define MyAppExeName "LogCollectorApp.exe"
 #define PublishDir "..\publish\win-x64"

@@ -1,6 +1,8 @@
 param(
     [string]$Configuration = "Release",
     [string]$Runtime = "win-x64"
+    [string]$Version = "1.0.0"
+    [string]$IsccPath = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -61,25 +63,29 @@ if (-not (Test-Path $ExePath)) {
 
 Write-Host "[3/3] Building installer with Inno Setup..."
 
-$IsccCommand = Get-Command "ISCC.exe" -ErrorAction SilentlyContinue
-
-$IsccCandidates = @(
-    "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
-    "$env:ProgramFiles\Inno Setup 6\ISCC.exe",
-    "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe"
-)
-$iscc = $possibleIscc | Where-Object { Test-Path $_ } | Select-Object -First 1
-
-$IsccPath = $null
-
-if ($IsccCommand) {
-    $IsccPath = $IsccCommand.Source
+if ($IsccPath) {
+    if (-not (Test-Path $IsccPath)) {
+        throw "Specified ISCC.exe path was not found: $IsccPath"
+    }
 }
 else {
-    foreach ($candidate in $IsccCandidates) {
-        if ($candidate -and (Test-Path $candidate)) {
-            $IsccPath = $candidate
-            break
+    $IsccCommand = Get-Command "ISCC.exe" -ErrorAction SilentlyContinue
+
+    $IsccCandidates = @(
+        "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
+        "$env:ProgramFiles\Inno Setup 6\ISCC.exe",
+        "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe"
+    )
+
+    if ($IsccCommand) {
+        $IsccPath = $IsccCommand.Source
+    }
+    else {
+        foreach ($candidate in $IsccCandidates) {
+            if ($candidate -and (Test-Path $candidate)) {
+                $IsccPath = $candidate
+                break
+            }
         }
     }
 }
@@ -90,7 +96,7 @@ if (-not $IsccPath) {
 
 Write-Host "Using Inno Setup compiler: $IsccPath"
 
-& $IsccPath ".\Installer\LogCollectorApp.iss"
+& $IsccPath $InstallerScript "/DMyAppVersion=$Version"
 
 if ($LASTEXITCODE -ne 0) {
     throw "Inno Setup build failed with exit code $LASTEXITCODE"

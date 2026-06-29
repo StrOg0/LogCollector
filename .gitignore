@@ -429,6 +429,8 @@ FodyWeavers.xsd
 *.msp
 .aider*
 
-
 local.sftp.runsettings
 *.local.runsettings
+
+LogCollectorApp/dist/
+LogCollectorApp/publish/
