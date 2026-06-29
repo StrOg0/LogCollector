@@ -25,17 +25,20 @@ public class SshFileHandler : ISshFileHandler
             ct.ThrowIfCancellationRequested();
             Directory.CreateDirectory(localTempDirectory);
 
+            string normalizedRemoteFilePath = NormalizeRemotePath(remoteFilePath);
+
             using var client = CreateClient(host, port, username, password);
             try
             {
                 progress?.Report($"Подключение к {CleanHost(host)}...");
                 client.Connect();
 
-                string localPath = Path.Combine(localTempDirectory, Path.GetFileName(remoteFilePath));
-                progress?.Report($"Скачивание: {Path.GetFileName(remoteFilePath)}");
+                string localFileName = Path.GetFileName(normalizedRemoteFilePath) ?? throw new ArgumentException("Не удалось определить имя удаленного файла.");
+                string localPath = Path.Combine(localTempDirectory, localFileName);
+                progress?.Report($"Скачивание: {localFileName}");
 
                 using var stream = File.Create(localPath);
-                client.DownloadFile(remoteFilePath, stream);
+                client.DownloadFile(normalizedRemoteFilePath, stream);
             }
             finally
             {
@@ -54,14 +57,16 @@ public class SshFileHandler : ISshFileHandler
         {
             ct.ThrowIfCancellationRequested();
 
+            string normalizedRemoteDirectoryPath = NormalizeRemotePath(remoteDirectoryPath);
+
             using var client = CreateClient(host, port, username, password);
             try
             {
                 client.Connect();
 
-                return client.ListDirectory(remoteDirectoryPath)
+                return client.ListDirectory(normalizedRemoteDirectoryPath)
                     .Where(file => !file.IsDirectory)
-                    .Select(file => file.FullName)
+                    .Select(file => NormalizeRemotePath(file.FullName))
                     .ToList();
             }
             finally
@@ -98,7 +103,30 @@ public class SshFileHandler : ISshFileHandler
             return uri.Host;
 
         int slashIndex = host.IndexOf('/');
-        return slashIndex >= 0 ? host[..slashIndex] : host;
+        if (slashIndex >= 0)
+            host = host[..slashIndex];
+
+        int colonIndex = host.LastIndexOf(':');
+        if (colonIndex > 0 && host.Count(ch => ch == ':') == 1)
+            host = host[..colonIndex];
+
+        return host;
+    }
+
+    private static string NormalizeRemotePath(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            throw new ArgumentException("SFTP-путь не указан");
+
+        string normalized = path.Trim().Replace('\\', '/');
+
+        while (normalized.Contains("//", StringComparison.Ordinal))
+            normalized = normalized.Replace("//", "/", StringComparison.Ordinal);
+
+        if (normalized.Length > 1)
+            normalized = normalized.TrimEnd('/');
+
+        return normalized;
     }
 
     private void ThrowIfDisposed()

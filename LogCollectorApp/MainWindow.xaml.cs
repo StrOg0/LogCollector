@@ -278,7 +278,6 @@ public partial class MainWindow : Window
                         successCount++;
                         if (!string.IsNullOrWhiteSpace(result.ResultFilePath))
                         {
-                            resultFiles.Add(result.ResultFilePath);
                             processedLogs.Add(new ProcessedLogInfo
                             {
                                 ServerIp = server.IpAddress,
@@ -310,6 +309,9 @@ public partial class MainWindow : Window
                 string archivePath = Path.Combine(outputDirectory, $"logs_{startDate:yyyyMMdd_HHmmss}_{endDate:yyyyMMdd_HHmmss}.zip");
                 archiveManager.CreateResultArchive(archivePath, processedLogs);
                 resultFiles.Add(archivePath);
+
+                foreach (var processedLog in processedLogs)
+                    TryDeleteFile(processedLog.TempFilePath);
             }
 
             txtStatus.Text = $"Завершено. Успешно: {successCount}, ошибок: {errorCount}";
@@ -350,6 +352,19 @@ public partial class MainWindow : Window
 
         ShowWarning("Конечное время должно быть больше начального!");
         return false;
+    }
+
+    private static void TryDeleteFile(string path)
+    {
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(path) && File.Exists(path))
+                File.Delete(path);
+        }
+        catch
+        {
+            // Удаление промежуточного .log не должно ломать уже созданный итоговый архив.
+        }
     }
 
     private static string BuildResultMessage(DateTime start, DateTime end, int success, int errorsCount,
