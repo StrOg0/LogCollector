@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace LogCollectorApp.Services;
@@ -38,6 +35,115 @@ public static class LogSearcher
             ? ExtractEntries(foundLines, allLines, IsWebLogLine)
             : ExtractAppEntries(foundLines, allLines);
     }
+
+    public static async Task<int> WriteMatchingEntriesAsync(
+        string filePath,
+        StreamWriter writer,
+        DateTime startTime,
+        DateTime endTime,
+        string groupName,
+        CancellationToken cancellationToken)
+    {
+        if (!File.Exists(filePath)) throw new FileNotFoundException($"Файл не найден: {filePath}");
+
+        int start = ToMinutes(startTime);
+        int end = ToMinutes(endTime);
+        bool isApp = groupName.Equals("app", StringComparison.OrdinalIgnoreCase);
+
+        return isApp
+            ? await WriteAppEntriesAsync(filePath, writer, start, end, cancellationToken)
+            : await WriteWebEntriesAsync(filePath, writer, start, end, cancellationToken);
+    }
+
+    private static async Task<int> WriteWebEntriesAsync(
+        string filePath,
+        StreamWriter writer,
+        int start,
+        int end,
+        CancellationToken cancellationToken)
+    {
+        using var reader = new StreamReader(filePath);
+        var current = new List<string>();
+        bool hasTarget = false;
+        int writtenCount = 0;
+
+        string? line;
+        while ((line = await reader.ReadLineAsync(cancellationToken)) != null)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            string trimmed = line.TrimStart();
+            bool isNewEntry = IsWebLogLine(trimmed);
+
+            if (isNewEntry)
+            {
+                writtenCount += await WriteCurrentEntryIfNeededAsync(writer, current, hasTarget, cancellationToken);
+                current.Clear();
+                hasTarget = IsLineInRange(trimmed, isApp: false, start, end);
+            }
+
+            if (current.Count > 0 || isNewEntry)
+                current.Add(line);
+        }
+
+        writtenCount += await WriteCurrentEntryIfNeededAsync(writer, current, hasTarget, cancellationToken);
+        return writtenCount;
+    }
+
+    private static async Task<int> WriteAppEntriesAsync(
+        string filePath,
+        StreamWriter writer,
+        int start,
+        int end,
+        CancellationToken cancellationToken)
+    {
+        using var reader = new StreamReader(filePath);
+        var current = new List<string>();
+        bool hasTarget = false;
+        int writtenCount = 0;
+
+        string? line;
+        while ((line = await reader.ReadLineAsync(cancellationToken)) != null)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            string trimmed = line.TrimStart();
+            bool isNewEntry = trimmed.StartsWith("StorageServerRuntime", StringComparison.OrdinalIgnoreCase);
+
+            if (isNewEntry)
+            {
+                writtenCount += await WriteCurrentEntryIfNeededAsync(writer, current, hasTarget, cancellationToken);
+                current.Clear();
+                hasTarget = false;
+            }
+
+            if (current.Count > 0 || isNewEntry)
+            {
+                current.Add(line);
+                hasTarget |= IsLineInRange(trimmed, isApp: true, start, end);
+            }
+        }
+
+        writtenCount += await WriteCurrentEntryIfNeededAsync(writer, current, hasTarget, cancellationToken);
+        return writtenCount;
+    }
+
+    private static async Task<int> WriteCurrentEntryIfNeededAsync(
+        StreamWriter writer,
+        List<string> current,
+        bool hasTarget,
+        CancellationToken cancellationToken)
+    {
+        if (!hasTarget || current.Count == 0) return 0;
+
+        foreach (string entryLine in current)
+            await writer.WriteLineAsync(entryLine.AsMemory(), cancellationToken);
+
+        return 1;
+    }
+
+    private static bool IsLineInRange(string line, bool isApp, int start, int end) =>
+        TryGetLogMinutes(line, isApp, out int minutes) && minutes >= start && minutes <= end;
 
     private static List<string> ExtractEntries(IEnumerable<string> foundLines, IEnumerable<string> allLines, Func<string, bool> isNewEntry)
     {

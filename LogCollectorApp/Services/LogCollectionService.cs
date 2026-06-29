@@ -1,11 +1,6 @@
 using LogCollectorApp.Interfaces;
 using LogCollectorApp.Models;
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace LogCollectorApp.Services;
 
@@ -35,29 +30,29 @@ public class LogCollectionService
                 ? await CollectWeb(server, start, end, workDir, progress, ct)
                 : await CollectApp(server, start, end, workDir, progress, ct);
 
-            var entries = new List<string>();
-            foreach (var file in files)
-            {
-                ct.ThrowIfCancellationRequested();
-                var found = LogSearcher.SearchLogsByTimeRange(file, start, end, group);
-                if (found.Count == 0) continue;
+            string resultPath = Path.Combine(outputDir, $"{server.Name}_{start:yyyyMMdd_HHmmss}_{end:yyyyMMdd_HHmmss}.log");
+            int entriesCount = 0;
 
-                entries.AddRange(LogSearcher.ExtractFullLogEntries(found, File.ReadAllLines(file), group));
+            await using (var writer = new StreamWriter(resultPath, append: false))
+            {
+                foreach (var file in files)
+                {
+                    ct.ThrowIfCancellationRequested();
+                    entriesCount += await LogSearcher.WriteMatchingEntriesAsync(file, writer, start, end, group, ct);
+                }
             }
 
-            if (entries.Count == 0)
+            if (entriesCount == 0)
             {
+                TryDelete(resultPath);
                 result.Status = CollectionStatus.NoData;
                 result.Message = "Записи не найдены";
                 return result;
             }
 
-            string resultPath = Path.Combine(outputDir, $"{server.Name}_{start:yyyyMMdd_HHmmss}_{end:yyyyMMdd_HHmmss}.log");
-            await File.WriteAllLinesAsync(resultPath, entries, ct);
-
             result.Status = CollectionStatus.Success;
             result.ResultFilePath = resultPath;
-            result.Message = $"Найдено {entries.Count} записей";
+            result.Message = $"Найдено {entriesCount} записей";
             progress?.Report($"✓ {server.Name}: {result.Message}");
         }
         catch (OperationCanceledException)
@@ -94,8 +89,8 @@ public class LogCollectionService
 
     private async Task<List<string>> CollectWeb(Server server, DateTime start, DateTime end, string workDir, IProgress<string> progress, CancellationToken ct)
     {
-        const string mainPath = "/digdes/TK/dock/ddmwebapi_log";
-        const string archivePath = "/digdes/TK/dock/ddmwebapi_log/archive";
+        const string mainPath = "/upload/ddmwebapi_log";
+        const string archivePath = "/upload/ddmwebapi_log/archive";
         var files = new List<string>();
 
         try
