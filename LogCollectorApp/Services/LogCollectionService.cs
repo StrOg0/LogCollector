@@ -40,6 +40,10 @@ public class LogCollectionService
             Encoding sourceEncoding = ResolveEncoding(logSource.Encoding);
 
             progress?.Report($"Источник логов: {logSource.LogPath}");
+            if (!string.IsNullOrWhiteSpace(logSource.ArchivePath))
+                progress?.Report($"Источник архивов: {logSource.ArchivePath}");
+            if (!string.IsNullOrWhiteSpace(logSource.FileMask))
+                progress?.Report($"Маска файлов из БД: {logSource.FileMask}");
 
             var files = group == WebGroupKey
                 ? await CollectWeb(server, start, end, workDir, logSource, progress, ct)
@@ -110,9 +114,12 @@ public class LogCollectionService
     {
         string mainPath = RequirePath(logSource.LogPath, "путь к текущим web-логам");
         string? archivePath = string.IsNullOrWhiteSpace(logSource.ArchivePath) ? null : logSource.ArchivePath.Trim();
-        string currentLogMask = string.IsNullOrWhiteSpace(logSource.FileMask) ? "DDM_Web.log" : logSource.FileMask.Trim();
+        string currentLogMask = ResolveWebCurrentLogMask(logSource.FileMask);
+        string archiveMask = ResolveWebArchiveMask(logSource.FileMask);
         var files = new List<string>();
         var sourceErrors = new List<string>();
+
+        progress?.Report($"Web: текущие логи ищутся по маске '{currentLogMask}', архивы — по маске '{archiveMask}'.");
 
         try
         {
@@ -134,8 +141,7 @@ public class LogCollectionService
                 var archives = await _ssh.GetFilesListAsync(server.IpAddress, server.SshPort, server.Login, server.Password, archivePath, ct);
                 foreach (var date in GetDateRange(start, end))
                 {
-                    string pattern = BuildArchiveDatePattern(currentLogMask, date);
-                    foreach (var archive in FindFilesByPattern(archives, pattern))
+                    foreach (var archive in FindArchiveFilesByPattern(archives, archiveMask, date))
                     {
                         string downloaded = await Download(archive, server, workDir, progress, ct);
                         files.AddRange(_archive.ExtractArchives(downloaded, workDir));
@@ -224,15 +230,35 @@ public class LogCollectionService
         return ApplyDatePlaceholders(fileMask.Trim(), date);
     }
 
-    private static string BuildArchiveDatePattern(string currentLogMask, DateTime date)
+    private static IEnumerable<string> FindArchiveFilesByPattern(IEnumerable<string> files, string archiveMask, DateTime date)
     {
-        string patternWithDate = ApplyDatePlaceholders(currentLogMask, date);
-        if (!string.Equals(patternWithDate, currentLogMask, StringComparison.Ordinal)) return patternWithDate;
+        archiveMask = ApplyDatePlaceholders(archiveMask.Trim(), date);
+        string dateToken = date.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
 
-        string baseName = Path.GetFileNameWithoutExtension(currentLogMask);
-        if (string.IsNullOrWhiteSpace(baseName)) baseName = currentLogMask;
+        return files.Where(file =>
+        {
+            string fileName = Path.GetFileName(file);
+            bool maskMatches = IsFileMatch(fileName, archiveMask);
+            bool maskHasExplicitDate = archiveMask.Contains(dateToken, StringComparison.OrdinalIgnoreCase) ||
+                                       archiveMask.Contains("{yyyy", StringComparison.OrdinalIgnoreCase) ||
+                                       archiveMask.Contains("{MM}", StringComparison.OrdinalIgnoreCase) ||
+                                       archiveMask.Contains("{dd}", StringComparison.OrdinalIgnoreCase);
 
-        return $"{baseName}_plain_{date:yyyyMMdd}";
+            return maskMatches && (maskHasExplicitDate || fileName.Contains(dateToken, StringComparison.OrdinalIgnoreCase));
+        });
+    }
+
+    private static string ResolveWebCurrentLogMask(string? fileMask)
+    {
+        string mask = fileMask?.Trim() ?? string.Empty;
+        return mask.EndsWith(".log", StringComparison.OrdinalIgnoreCase) ? mask : "DDM_Web.log";
+    }
+
+    private static string ResolveWebArchiveMask(string? fileMask)
+    {
+        string mask = fileMask?.Trim() ?? string.Empty;
+        if (mask.EndsWith(".zip", StringComparison.OrdinalIgnoreCase)) return mask;
+        return "DDM_Web_plain_{yyyyMMdd}*.zip";
     }
 
     private static string ApplyDatePlaceholders(string value, DateTime date) => value

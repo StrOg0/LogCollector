@@ -311,6 +311,59 @@ public class LogCollectionServiceTests
         Assert.That(_fakeSsh.DownloadedFiles, Does.Contain(remoteArchive));
     }
 
+
+    [Test]
+    public async Task CollectLogsAsync_WhenWebFileMaskPointsToArchives_StillDownloadsCurrentLogAndMatchingArchive()
+    {
+        const string mainDirectory = "/digdes/TK/dock/ddmwebapi_log";
+        const string archiveDirectory = "/digdes/TK/dock/ddmwebapi_log/archive";
+        const string remoteMainLog = "/digdes/TK/dock/ddmwebapi_log/DDM_Web.log";
+        const string matchingArchive = "/digdes/TK/dock/ddmwebapi_log/archive/DDM_Web_plain_20260608_140000.zip";
+        const string oldArchive = "/digdes/TK/dock/ddmwebapi_log/archive/DDM_Web_plain_20260607_140000.zip";
+
+        _fakeSsh.DirectoryFiles[mainDirectory] = new List<string> { remoteMainLog };
+        _fakeSsh.DirectoryFiles[archiveDirectory] = new List<string> { matchingArchive, oldArchive };
+
+        _fakeSsh.RemoteTextFiles[remoteMainLog] =
+            """
+            2026-06-08 14:00:00 target from current log
+            """;
+
+        _fakeSsh.RemoteBinaryFiles[matchingArchive] = CreateZipBytes(
+            "DDM_Web.log",
+            """
+            2026-06-08 14:01:00 target from matching archive
+            """);
+
+        _fakeSsh.RemoteBinaryFiles[oldArchive] = CreateZipBytes(
+            "DDM_Web.log",
+            """
+            2026-06-07 14:01:00 old archive line
+            """);
+
+        Server server = CreateWebServer();
+        server.Group!.LogSource!.FileMask = "DDM_Web_plain_*.zip";
+
+        CollectionResult result = await _service.CollectLogsAsync(
+            server,
+            new DateTime(2026, 6, 8, 14, 0, 0),
+            new DateTime(2026, 6, 8, 14, 5, 0),
+            _tempRoot,
+            _outputDir,
+            progress: null!,
+            CancellationToken.None);
+
+        Assert.That(result.Status, Is.EqualTo(CollectionStatus.Success));
+        Assert.That(_fakeSsh.DownloadedFiles, Does.Contain(remoteMainLog));
+        Assert.That(_fakeSsh.DownloadedFiles, Does.Contain(matchingArchive));
+        Assert.That(_fakeSsh.DownloadedFiles, Does.Not.Contain(oldArchive));
+
+        string content = File.ReadAllText(result.ResultFilePath);
+        Assert.That(content, Does.Contain("target from current log"));
+        Assert.That(content, Does.Contain("target from matching archive"));
+        Assert.That(content, Does.Not.Contain("old archive line"));
+    }
+
     [Test]
     public async Task CollectLogsAsync_WhenLogSourceHasCustomPath_UsesPathFromDatabaseModel()
     {
