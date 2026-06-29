@@ -253,12 +253,14 @@ public partial class MainWindow : Window
         {
             Directory.CreateDirectory(outputDirectory);
             using var ssh = new SshFileHandler();
-            var service = new LogCollectionService(ssh, new ArchiveManager());
+            var archiveManager = new ArchiveManager();
+            var service = new LogCollectionService(ssh, archiveManager);
             var progress = new Progress<string>(message => txtStatus.Text = message);
 
             int successCount = 0;
             int errorCount = 0;
             var resultFiles = new List<string>();
+            var processedLogs = new List<ProcessedLogInfo>();
             var errors = new List<string>();
 
             foreach (var server in selectedServers)
@@ -274,7 +276,17 @@ public partial class MainWindow : Window
                     if (result.Status == CollectionStatus.Success)
                     {
                         successCount++;
-                        if (!string.IsNullOrWhiteSpace(result.ResultFilePath)) resultFiles.Add(result.ResultFilePath);
+                        if (!string.IsNullOrWhiteSpace(result.ResultFilePath))
+                        {
+                            resultFiles.Add(result.ResultFilePath);
+                            processedLogs.Add(new ProcessedLogInfo
+                            {
+                                ServerIp = server.IpAddress,
+                                ServerName = server.Name,
+                                TempFilePath = result.ResultFilePath,
+                                LogDate = startDate.Date
+                            });
+                        }
                     }
                     else
                     {
@@ -291,6 +303,13 @@ public partial class MainWindow : Window
                 {
                     if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true);
                 }
+            }
+
+            if (processedLogs.Count > 0)
+            {
+                string archivePath = Path.Combine(outputDirectory, $"logs_{startDate:yyyyMMdd_HHmmss}_{endDate:yyyyMMdd_HHmmss}.zip");
+                archiveManager.CreateResultArchive(archivePath, processedLogs);
+                resultFiles.Add(archivePath);
             }
 
             txtStatus.Text = $"Завершено. Успешно: {successCount}, ошибок: {errorCount}";

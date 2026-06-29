@@ -1,4 +1,4 @@
-﻿using LogCollectorApp.Services;
+using LogCollectorApp.Services;
 using NUnit.Framework;
 
 namespace LogCollectorApp.Tests.Services;
@@ -110,6 +110,30 @@ public class LogSearcherTests
             new DateTime(2026, 6, 8, 14, 0, 0),
             new DateTime(2026, 6, 8, 14, 5, 0),
             "app");
+
+        Assert.That(result, Has.Count.EqualTo(2));
+        Assert.That(result[0], Does.Contain("first target"));
+        Assert.That(result[1], Does.Contain("second target"));
+    }
+
+    [Test]
+    public void SearchLogsByTimeRange_WhenPeriodCrossesMidnight_UsesFullDateTimeNotOnlyMinutes()
+    {
+        string filePath = Path.Combine(_tempDir, "DDM_Web.log");
+
+        File.WriteAllLines(filePath, new[]
+        {
+            "2026-06-08 23:54:59 before",
+            "2026-06-08 23:55:00 first target",
+            "2026-06-09 00:05:00 second target",
+            "2026-06-09 00:11:00 after"
+        });
+
+        var result = LogSearcher.SearchLogsByTimeRange(
+            filePath,
+            new DateTime(2026, 6, 8, 23, 55, 0),
+            new DateTime(2026, 6, 9, 0, 10, 0),
+            "web");
 
         Assert.That(result, Has.Count.EqualTo(2));
         Assert.That(result[0], Does.Contain("first target"));

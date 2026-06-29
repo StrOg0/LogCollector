@@ -26,15 +26,21 @@ public class SshFileHandler : ISshFileHandler
             Directory.CreateDirectory(localTempDirectory);
 
             using var client = CreateClient(host, port, username, password);
-            progress?.Report($"Подключение к {CleanHost(host)}...");
-            client.Connect();
+            try
+            {
+                progress?.Report($"Подключение к {CleanHost(host)}...");
+                client.Connect();
 
-            string localPath = Path.Combine(localTempDirectory, Path.GetFileName(remoteFilePath));
-            progress?.Report($"Скачивание: {Path.GetFileName(remoteFilePath)}");
+                string localPath = Path.Combine(localTempDirectory, Path.GetFileName(remoteFilePath));
+                progress?.Report($"Скачивание: {Path.GetFileName(remoteFilePath)}");
 
-            using var stream = File.Create(localPath);
-            client.DownloadFile(remoteFilePath, stream);
-            client.Disconnect();
+                using var stream = File.Create(localPath);
+                client.DownloadFile(remoteFilePath, stream);
+            }
+            finally
+            {
+                if (client.IsConnected) client.Disconnect();
+            }
         }, ct);
     }
 
@@ -49,15 +55,19 @@ public class SshFileHandler : ISshFileHandler
             ct.ThrowIfCancellationRequested();
 
             using var client = CreateClient(host, port, username, password);
-            client.Connect();
+            try
+            {
+                client.Connect();
 
-            var files = client.ListDirectory(remoteDirectoryPath)
-                .Where(file => !file.IsDirectory)
-                .Select(file => file.FullName)
-                .ToList();
-
-            client.Disconnect();
-            return files;
+                return client.ListDirectory(remoteDirectoryPath)
+                    .Where(file => !file.IsDirectory)
+                    .Select(file => file.FullName)
+                    .ToList();
+            }
+            finally
+            {
+                if (client.IsConnected) client.Disconnect();
+            }
         }, ct);
     }
 

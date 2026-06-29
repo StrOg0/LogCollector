@@ -12,7 +12,11 @@ public class ServerRepository : IServerRepository
     public Task<List<ServerGroup>> GetAllGroupsAsync()
     {
         _context.ChangeTracker.Clear();
-        return _context.ServerGroups.AsNoTracking().Where(g => g.IsActive).OrderBy(g => g.Id).ToListAsync();
+        return _context.ServerGroups.AsNoTracking()
+            .Include(g => g.LogSource)
+            .Where(g => g.IsActive)
+            .OrderBy(g => g.Id)
+            .ToListAsync();
     }
 
     public Task<List<Server>> GetServersByGroupAsync(long groupId)
@@ -20,6 +24,7 @@ public class ServerRepository : IServerRepository
         _context.ChangeTracker.Clear();
         return _context.Servers.AsNoTracking()
             .Include(s => s.Group)
+                .ThenInclude(g => g!.LogSource)
             .Where(s => s.GroupId == groupId && s.IsActive)
             .OrderBy(s => s.Id)
             .ToListAsync();
@@ -55,6 +60,7 @@ public class ServerRepository : IServerRepository
                 """)
             .AsNoTracking()
             .Include(s => s.Group)
+                .ThenInclude(g => g!.LogSource)
             .OrderBy(s => s.Id)
             .ToListAsync();
     }

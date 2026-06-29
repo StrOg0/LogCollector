@@ -1,11 +1,20 @@
+using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace LogCollectorApp.Services;
 
 public static class LogSearcher
 {
-    private static readonly Regex AppDateTimeRegex = new(@"DateTime=\d{4}-\d{2}-\d{2}T(\d{2}):(\d{2}):\d{2}", RegexOptions.Compiled);
+    private static readonly Regex AppDateTimeRegex = new(
+        @"DateTime=(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?)",
+        RegexOptions.Compiled);
 
     public static List<string> FindLogFilesByDate(List<string> files, DateTime date, string groupName)
     {
@@ -19,13 +28,11 @@ public static class LogSearcher
     {
         if (!File.Exists(filePath)) throw new FileNotFoundException($"Файл не найден: {filePath}");
 
-        int start = ToMinutes(startTime);
-        int end = ToMinutes(endTime);
         bool isApp = groupName.Equals("app", StringComparison.OrdinalIgnoreCase);
 
         return File.ReadLines(filePath)
             .Select(line => line.TrimStart())
-            .Where(line => TryGetLogMinutes(line, isApp, out int minutes) && minutes >= start && minutes <= end)
+            .Where(line => TryGetLogDateTime(line, isApp, out DateTime timestamp) && IsInRange(timestamp, startTime, endTime))
             .ToList();
     }
 
@@ -42,27 +49,28 @@ public static class LogSearcher
         DateTime startTime,
         DateTime endTime,
         string groupName,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        Encoding? sourceEncoding = null)
     {
         if (!File.Exists(filePath)) throw new FileNotFoundException($"Файл не найден: {filePath}");
 
-        int start = ToMinutes(startTime);
-        int end = ToMinutes(endTime);
         bool isApp = groupName.Equals("app", StringComparison.OrdinalIgnoreCase);
+        sourceEncoding ??= Encoding.UTF8;
 
         return isApp
-            ? await WriteAppEntriesAsync(filePath, writer, start, end, cancellationToken)
-            : await WriteWebEntriesAsync(filePath, writer, start, end, cancellationToken);
+            ? await WriteAppEntriesAsync(filePath, writer, startTime, endTime, sourceEncoding, cancellationToken)
+            : await WriteWebEntriesAsync(filePath, writer, startTime, endTime, sourceEncoding, cancellationToken);
     }
 
     private static async Task<int> WriteWebEntriesAsync(
         string filePath,
         StreamWriter writer,
-        int start,
-        int end,
+        DateTime startTime,
+        DateTime endTime,
+        Encoding sourceEncoding,
         CancellationToken cancellationToken)
     {
-        using var reader = new StreamReader(filePath);
+        using var reader = new StreamReader(filePath, sourceEncoding, detectEncodingFromByteOrderMarks: true, bufferSize: 1024 * 1024);
         var current = new List<string>();
         bool hasTarget = false;
         int writtenCount = 0;
@@ -79,7 +87,7 @@ public static class LogSearcher
             {
                 writtenCount += await WriteCurrentEntryIfNeededAsync(writer, current, hasTarget, cancellationToken);
                 current.Clear();
-                hasTarget = IsLineInRange(trimmed, isApp: false, start, end);
+                hasTarget = IsLineInRange(trimmed, isApp: false, startTime, endTime);
             }
 
             if (current.Count > 0 || isNewEntry)
@@ -93,11 +101,12 @@ public static class LogSearcher
     private static async Task<int> WriteAppEntriesAsync(
         string filePath,
         StreamWriter writer,
-        int start,
-        int end,
+        DateTime startTime,
+        DateTime endTime,
+        Encoding sourceEncoding,
         CancellationToken cancellationToken)
     {
-        using var reader = new StreamReader(filePath);
+        using var reader = new StreamReader(filePath, sourceEncoding, detectEncodingFromByteOrderMarks: true, bufferSize: 1024 * 1024);
         var current = new List<string>();
         bool hasTarget = false;
         int writtenCount = 0;
@@ -120,7 +129,7 @@ public static class LogSearcher
             if (current.Count > 0 || isNewEntry)
             {
                 current.Add(line);
-                hasTarget |= IsLineInRange(trimmed, isApp: true, start, end);
+                hasTarget |= IsLineInRange(trimmed, isApp: true, startTime, endTime);
             }
         }
 
@@ -142,8 +151,11 @@ public static class LogSearcher
         return 1;
     }
 
-    private static bool IsLineInRange(string line, bool isApp, int start, int end) =>
-        TryGetLogMinutes(line, isApp, out int minutes) && minutes >= start && minutes <= end;
+    private static bool IsLineInRange(string line, bool isApp, DateTime startTime, DateTime endTime) =>
+        TryGetLogDateTime(line, isApp, out DateTime timestamp) && IsInRange(timestamp, startTime, endTime);
+
+    private static bool IsInRange(DateTime timestamp, DateTime startTime, DateTime endTime) =>
+        timestamp >= startTime && timestamp <= endTime;
 
     private static List<string> ExtractEntries(IEnumerable<string> foundLines, IEnumerable<string> allLines, Func<string, bool> isNewEntry)
     {
@@ -202,29 +214,29 @@ public static class LogSearcher
         if (hasTarget && entry.Count > 0) result.Add(string.Join(Environment.NewLine, entry));
     }
 
-    private static bool TryGetLogMinutes(string line, bool isApp, out int minutes)
+    private static bool TryGetLogDateTime(string line, bool isApp, out DateTime timestamp)
     {
-        minutes = 0;
+        timestamp = default;
+
         if (isApp)
         {
             var match = AppDateTimeRegex.Match(line);
-            if (!match.Success) return false;
-
-            minutes = int.Parse(match.Groups[1].Value) * 60 + int.Parse(match.Groups[2].Value);
-            return true;
+            return match.Success && TryParseTimestamp(match.Groups[1].Value, "yyyy-MM-dd'T'HH:mm:ss.FFFFFFF", "yyyy-MM-dd'T'HH:mm:ss", out timestamp);
         }
 
-        if (!IsWebLogLine(line)) return false;
-        minutes = (line[11] - '0') * 600 + (line[12] - '0') * 60 + (line[14] - '0') * 10 + line[15] - '0';
-        return true;
+        return IsWebLogLine(line) && TryParseTimestamp(line[..19], "yyyy-MM-dd HH:mm:ss", out timestamp);
     }
+
+    private static bool TryParseTimestamp(string value, string format, out DateTime timestamp) =>
+        DateTime.TryParseExact(value, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out timestamp);
+
+    private static bool TryParseTimestamp(string value, string formatWithFraction, string formatWithoutFraction, out DateTime timestamp) =>
+        DateTime.TryParseExact(value, new[] { formatWithFraction, formatWithoutFraction }, CultureInfo.InvariantCulture, DateTimeStyles.None, out timestamp);
 
     private static bool IsWebLogLine(string line) =>
         line.Length >= 19 &&
         char.IsDigit(line[0]) && char.IsDigit(line[1]) && char.IsDigit(line[2]) && char.IsDigit(line[3]) &&
         line[4] == '-' && line[7] == '-' && line[10] == ' ' && line[13] == ':' && line[16] == ':';
-
-    private static int ToMinutes(DateTime time) => time.Hour * 60 + time.Minute;
 
     private static string GetDatePattern(string groupName, DateTime date) => groupName.ToLowerInvariant() switch
     {

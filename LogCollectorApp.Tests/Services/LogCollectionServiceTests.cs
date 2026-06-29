@@ -1,4 +1,4 @@
-﻿using LogCollectorApp.Models;
+using LogCollectorApp.Models;
 using LogCollectorApp.Services;
 using LogCollectorApp.Tests.Fakes;
 using System.IO.Compression;
@@ -312,6 +312,42 @@ public class LogCollectionServiceTests
     }
 
     [Test]
+    public async Task CollectLogsAsync_WhenLogSourceHasCustomPath_UsesPathFromDatabaseModel()
+    {
+        const string remoteDirectory = "/custom/app/logs";
+        const string remoteFile = "/custom/app/logs/custom 2026Y06M08D.log";
+
+        _fakeSsh.DirectoryFiles[remoteDirectory] = new List<string>
+        {
+            remoteFile
+        };
+
+        _fakeSsh.RemoteTextFiles[remoteFile] =
+            """
+            StorageServerRuntime custom entry
+            DateTime=2026-06-08T14:00:00 target line
+            Action=OpenDocument
+            """;
+
+        Server server = CreateAppServer();
+        server.Group!.LogSource!.LogPath = remoteDirectory;
+        server.Group.LogSource.FileMask = "custom {yyyy}Y{MM}M{dd}D";
+
+        CollectionResult result = await _service.CollectLogsAsync(
+            server,
+            new DateTime(2026, 6, 8, 14, 0, 0),
+            new DateTime(2026, 6, 8, 14, 5, 0),
+            _tempRoot,
+            _outputDir,
+            progress: null!,
+            CancellationToken.None);
+
+        Assert.That(result.Status, Is.EqualTo(CollectionStatus.Success));
+        Assert.That(_fakeSsh.RequestedDirectories, Does.Contain(remoteDirectory));
+        Assert.That(_fakeSsh.DownloadedFiles, Does.Contain(remoteFile));
+    }
+
+    [Test]
     public async Task CollectLogsAsync_WhenProgressProvided_ReportsProgressMessages()
     {
         const string remoteDirectory = "/var/log/digdes/sdu";
@@ -361,7 +397,16 @@ public class LogCollectionServiceTests
             Group = new ServerGroup
             {
                 Id = 1,
-                Name = "app"
+                Name = "app",
+                LogSource = new LogSource
+                {
+                    Id = 1,
+                    GroupId = 1,
+                    LogPath = "/var/log/digdes/sdu",
+                    FileMask = "log {yyyy}Y{MM}M{dd}D",
+                    SearchMask = "DateTime={yyyy-MM-dd}T{HH}:{mm}:",
+                    Encoding = "UTF-8"
+                }
             }
         };
     }
@@ -380,7 +425,17 @@ public class LogCollectionServiceTests
             Group = new ServerGroup
             {
                 Id = 2,
-                Name = "web"
+                Name = "web",
+                LogSource = new LogSource
+                {
+                    Id = 2,
+                    GroupId = 2,
+                    LogPath = "/digdes/TK/dock/ddmwebapi_log",
+                    ArchivePath = "/digdes/TK/dock/ddmwebapi_log/archive",
+                    FileMask = "DDM_Web.log",
+                    SearchMask = "{yyyy-MM-dd} {HH}:{mm}:",
+                    Encoding = "UTF-8"
+                }
             }
         };
     }
